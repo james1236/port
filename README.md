@@ -1,3 +1,3 @@
 # port
-A way of showing off javascript apps in a windows-like pixel art window layout (portfolio?)
+A mock pixel art operating system in browser where mini JavaScript programs can be subtly iframed in draggable windows.
 * 31/October/2018 (start dev of port)
