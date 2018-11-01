@@ -1,7 +1,10 @@
-/* Project Browser Based on Windows Like Desktop Design */
+/* Project Browser Based on Windows Like Desktop Design 
+inspired by http://daydun.com/'s terminal portfolio and other projects
+*/
 
-//give new windows those random colors if their content hasn't been loaded yet (no canvas screenshot)
-//save all window position and data between sessions
+//save windows array between sessions (contains all programs local vars too)
+
+//cannot create 2 windows in the same tick for some reason ;/
 
 var canvas = document.getElementById('canvas');
 var context = canvas.getContext('2d');
@@ -16,6 +19,7 @@ var held;
 var heldStart;
 var active = -1;
 
+var tempVar = 4;
 
 var globalTimer = 0;
 
@@ -64,32 +68,24 @@ function createWindow(x,y,z,sx,sy,mx,mn,program) {
 		mn:mn,
 		id:Math.random(),
 		program:program,
-		canvas:document.createElement("canvas"),
-		script:document.createElement("script"),
+		iframe:document.createElement("iframe"),
 		initiated:false,
 		active:false,
 	});
 	
-	windows[windows.length-1].script.addEventListener("onload",this.init);
-	windows[windows.length-1].script.src = "programs/"+program+".js";
-	windows[windows.length-1].canvas.style = "top:"+(y)+"px;left:"+(x+(tileScale/8))+"px;position: fixed;background-color: rgba(255,230,255)";
-	windows[windows.length-1].script.setAttribute("id",windows[windows.length-1].id+"");
-	windows[windows.length-1].canvas.setAttribute("id",windows[windows.length-1].id+"");
-	scaleCanvas(windows[windows.length-1].canvas,sx*tileScale,sy*tileScale);
-	
-	document.body.appendChild(windows[windows.length-1].canvas);
-	document.body.appendChild(windows[windows.length-1].script);
-	
 	setActiveWindow(windows.length-1);
-	windowPointerEvents(true);
 	
-}
+	windows[windows.length-1].iframe.src = "programs/"+program+"/index.html";
+	windows[windows.length-1].iframe.style = "top:"+(y)+"px;left:"+(x+(tileScale/8))+"px;position: fixed;";
+	windows[windows.length-1].iframe.setAttribute("id",windows[windows.length-1].id+"");
+	windows[windows.length-1].iframe.frameBorder = "0";
+	windows[windows.length-1].iframe.width = sx*tileScale-(tileScale/4); 
+	windows[windows.length-1].iframe.height = sy*tileScale-(tileScale/8);
 
-createWindow(100,100,0,8,5,false,false,"demo");
-createWindow(200,150,0,5,7,false,false,"demo");
-createWindow(300,200,0,8,5,false,false,"demo");
-createWindow(700,500,0,2,1,false,false,"demo");
-createWindow(900,500,0,2,2,false,false,"demo");
+	document.body.appendChild(windows[windows.length-1].iframe);
+
+	windowPointerEvents(true);
+}
 
 function drawWindows() {
 	//start by sorting windows by their z
@@ -141,17 +137,26 @@ function drawWindow(i) {
 		}
 	}
 	
-
+	//title
+	context.globalAlpha = 0.5;
+	context.textAlign = "left";
+	context.fillStyle = "#fff";
+	context.font = "24px font";
+	context.fillText(windows[i].program,windows[i].x+35,windows[i].y-7);
+	context.globalAlpha = 1;
+	
+	
+	//Seeded Random colored rect for bg of windows based on their id
+	Math.seed = windows[i].id * 1000;
+	context.fillStyle = "#"+Math.seededRandom(2,9)+""+Math.seededRandom(2,9)+""+Math.seededRandom(2,9)+"";
+	context.fillRect(windows[i].x+(tileScale/8),windows[i].y,windows[i].sx*tileScale-(tileScale/4),windows[i].sy*tileScale-(tileScale/8));
+		
+		
 	if (!windows[i].active) {
-		//draw random colored rect for unpictured inactive windows
-		Math.seed = windows[i].id * 1000;
-		context.fillStyle = "#"+Math.seededRandom(2,9)+""+Math.seededRandom(2,9)+""+Math.seededRandom(2,9)+"";
-		context.fillRect(windows[i].x+(tileScale/8),windows[i].y,windows[i].sx*tileScale-(tileScale/4),windows[i].sy*tileScale-(tileScale/8));
-		
 		//draw screenshot for inactive windows
-		context.drawImage(windows[i].image,windows[i].x+(tileScale/8),windows[i].y,windows[i].sx*tileScale-(tileScale/4),windows[i].sy*tileScale-(tileScale/8));
-		
-		
+		try {
+			context.drawImage(windows[i].image,windows[i].x+(tileScale/8),windows[i].y,windows[i].sx*tileScale-(tileScale/4),windows[i].sy*tileScale-(tileScale/8));
+		} catch (e) {}
 	}
 }
 
@@ -186,15 +191,23 @@ setInterval(function() {
 
 
 function tickWindows() {
-	for (i = windows.length-1; i > -1; i--) {
-		windows[i].canvas.style.top = windows[i].y+"px";
-		windows[i].canvas.style.left = (windows[i].x+(tileScale/8))+"px";
-		if (!windows[i].initiated) {
-			windows[i].init();
-			windows[i].initiated = true;
-		}
-		if (windows[i].active) {
-			windows[i].tick();
+	for (wi = windows.length-1; wi > -1; wi--) {		
+		windows[wi].iframe.style.top = windows[wi].y+"px";
+		windows[wi].iframe.style.left = (windows[wi].x+(tileScale/8))+"px";
+		if (!windows[wi].initiated) {
+			try {
+				windows[wi].iframe.contentWindow.postMessage({type:"init",id:windows[wi].id}, '*'); 
+			} catch (e) {
+				console.log(e);
+			}
+		} else {
+			if (windows[wi].active) {
+				try {
+					windows[wi].iframe.contentWindow.postMessage({type:"tick"}, '*'); 
+				} catch (e) {
+					console.log(e);
+				}
+			}
 		}
 	}
 }
@@ -204,6 +217,18 @@ function mainLoop() {
 	tickWindows();
 	drawWindows();
 	globalTimer++;
+	
+	//Generating start windows
+	if (tempVar > 0) {
+		if (tempVar % 1 == 0) {
+			if (tempVar != 1) {
+				createWindow(100+((5-tempVar)*100),50+((5-tempVar)*50),0,8-(5-tempVar),Math.round(7-(5-tempVar)/0.75),false,false,"demo");
+			} else {
+				createWindow(100+((5-tempVar)*100),50+((3-tempVar)*50),0,8-(3-tempVar),Math.round(7-(3-tempVar)/0.75),false,false,"demoError");
+			}
+		}
+		tempVar-=0.25;
+	}
 }
 
 function mouseCollide(x,y,width,height) {
@@ -232,32 +257,32 @@ function hoverHeld() {
 function hoverWindow() {
 	//if hover on active, don't click through
 	if (mouseCollide(windows[active].x,windows[active].y,windows[active].sx * tileScale,windows[active].sy * tileScale)) {
-		return;
+		return true;
 	}
 	for (i = 0; i < windows.length; i++) {
 		if (active != i) {
 			if (mouseCollide(windows[i].x,windows[i].y,windows[i].sx * tileScale,windows[active].sy * tileScale)) {
 				setActiveWindow(i);
-				return;
+				return true;
 			}
 		}
 	}
+	return false;
 }
-
-//take original js file as input and dynamically turn it into a program.js (replace canvas and context with relative, etc)
 
 function setActiveWindow(index) {
 	active = index;
 	for (i = windows.length-1; i > -1; i--) {
 		if (i != index) {
-			windows[i].canvas.style.pointerEvents = "none";
-			windows[i].canvas.style.display = "none";
+			windows[i].iframe.style.pointerEvents = "none";
+			windows[i].iframe.style.display = "none";
 			windows[i].active = false;
-			windows[i].image = new Image();
-			windows[i].image.src = windows[i].canvas.toDataURL('png');
+			
+			//Request Image
+			windows[i].iframe.contentWindow.postMessage({type:"image"}, '*'); 
 		} else {
-			windows[i].canvas.style.pointerEvents = "auto";
-			windows[i].canvas.style.display = "block";
+			windows[i].iframe.style.pointerEvents = "auto";
+			windows[i].iframe.style.display = "block";
 			windows[i].active = true;
 		}
 	}
@@ -265,9 +290,22 @@ function setActiveWindow(index) {
 
 function windowPointerEvents(mode) {
 	for (i = windows.length-1; i > -1; i--) {
-		windows[i].canvas.style.pointerEvents = (mode) ? "auto" : "none";
+		windows[i].iframe.style.pointerEvents = (mode) ? "auto" : "none";
 	}
 }
+
+//Recive data from windows
+window.addEventListener('message', function(event) { 
+	if (event.data.type == "image") {
+		windowIndex = getWindowIndexByID(event.data.id);
+		
+		windows[windowIndex].image = new Image();
+		windows[windowIndex].image.src = event.data.data;
+	}
+	if (event.data.type == "init") {
+		windows[getWindowIndexByID(event.data.data)].initiated = true;
+	}
+}); 
 
 //Mouse Input
 

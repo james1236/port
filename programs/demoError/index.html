@@ -1,0 +1,128 @@
+<body>
+<style>
+	@font-face {
+	  font-family: 'font';
+	  src: url('font.woff') format('woff'),
+	   url('font.ttf') format('truetype');
+	}  		
+	html * {
+		font-family: font;
+	}
+</style>
+<canvas id="canvas" style="top:0px;left:0px;position: fixed;"></canvas>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script>
+
+	function scaleCanvas() {
+		canvas.width = window.innerWidth; 
+		canvas.height = window.innerHeight;
+
+		canvas.style.width = Math.round(canvas.width)+"px";
+		canvas.style.height = Math.round(canvas.height)+"px";
+	}
+	
+	//Recive data from main
+	window.addEventListener('message', function(event) { 
+		if (event.data.type == "init") {
+			window.parent.postMessage({type:"init",data:id}, '*');
+			id = event.data.id;
+			init();
+		}
+		if (event.data.type == "tick") {
+			tick();
+		}
+		if (event.data.type == "image") {
+			window.parent.postMessage({type:"image",data:canvas.toDataURL('png'),id:id}, '*');
+		}
+	}); 
+	
+	try {
+		//Window specific code	
+		var canvas = document.getElementById("canvas");
+		var context = canvas.getContext('2d');
+		var tickCounter;
+		var id;
+		var error;
+		
+		function scaleCanvas() {
+			canvas.width = window.innerWidth; 
+			canvas.height = window.innerHeight;
+
+			canvas.style.width = Math.round(canvas.width)+"px";
+			canvas.style.height = Math.round(canvas.height)+"px";
+		}
+		
+		scaleCanvas();
+	
+		function init() {		
+			if (error != undefined) {
+				throw error;
+			}
+			
+			//Blue BG
+			context.fillStyle = "#66f";
+			context.fillRect(0,0,canvas.width,canvas.height);
+			
+			//Init 
+			context.globalAlpha = 0.5;
+			context.fillStyle = "#000";
+			context.fillRect(0,0,canvas.width,100);
+			context.globalAlpha = 1;
+			
+			//Text
+			context.fillStyle = "#fff";
+			context.font = "24px font";
+			context.textAlign = "center";
+			context.fillText("Program Initialized! ",canvas.width/2,50);
+			context.fillStyle = "#000";
+			
+			//Create Tick Counter
+			tickCounter = 0;
+		}
+
+		function tick() {
+			if (error != undefined) {
+				throw error;
+			}
+		
+			//Tick Banner
+			context.fillRect(0,canvas.height-100,canvas.width,100);
+			
+			//Text
+			context.fillStyle = "#fff";
+			context.font = "24px font";
+			context.textAlign = "center";
+			context.fillText("Program Ticked! "+tickCounter,canvas.width/2,canvas.height-50);
+			context.font = "12px font";
+			context.fillText(id,canvas.width/2,canvas.height-25);
+			context.fillStyle = "#000";
+			
+			//Tick Counter
+			tickCounter++;
+		}
+		
+		causingARandomError *= 2;
+
+		$(canvas)
+			.bind('touchstart mousedown',function(e){
+				alert("touch");
+			});
+			
+	} catch (e) {
+		console.log(e);
+		//Error screen
+		var canvas = document.getElementById("canvas");
+		var context = canvas.getContext('2d');
+		scaleCanvas();
+		context.textAlign = "center";
+		context.fillStyle = "red"
+		context.fillRect(0,0,canvas.width,canvas.height);
+		context.fillStyle = "white";
+		context.font = "32px font";
+		context.fillText("ERROR",canvas.width/2,canvas.height/2.5);
+		context.font = "12px arial";
+		context.fillText(e,canvas.width/2,canvas.height/1.5);
+		error = e;
+	}
+</script>
+</body>
