@@ -42,14 +42,16 @@ var tileScale = 64;
 
 var windows = [];
 
-function getWindowsByProgram(program) {
+var deletions = [];
+
+function getWindowIndiciesByProgram(program) {
 	output = [];
 	for (i = windows.length-1; i > -1; i--) {
-		if (windows[i].program == program) {
-			output.push(windows[i]);
+		if (windows[i].program == program || program == "*") {
+			output.push(windows[i].id);
 		}
 	}
-	return windows;
+	return output;
 }
 
 function getWindowIndexByID(id) {
@@ -146,7 +148,14 @@ function drawWindow(i) {
 	context.fillStyle = "#fff";
 	context.font = "24px font";
 	context.fillText(windows[i].program,windows[i].x+35,windows[i].y-7);
-	context.fillText(windows[i].program+" "+windows[i].id,windows[i].x+35,windows[i].y-7);
+	if (windows[i].sx > 5) {
+		context.fillText(windows[i].program+" "+windows[i].id,windows[i].x+35,windows[i].y-7);
+	} else {
+		context.fillText(windows[i].program+" "+(windows[i].id+"").substr(0,12)+"...",windows[i].x+35,windows[i].y-7);
+	}
+	context.globalAlpha = 0.8;
+	context.textAlign = "right";
+	context.fillText("- \u25A1 x",windows[i].x+windows[i].sx*tileScale-40,windows[i].y-9);
 	context.globalAlpha = 1;
 	
 	
@@ -183,6 +192,20 @@ function scaleCanvas(canvasElem,sx,sy,light) {
 
 scaleCanvas();
 
+function deleteWindows() {
+	while (deletions.length > 0) {
+		windows[getWindowIndexByID(deletions[0])].iframe.remove();
+		windows.splice(getWindowIndexByID(deletions[0]),1);
+		deletions.shift();
+		
+		if (active > windows.length-1) {
+			setActiveWindow(0);
+		} else {
+			setActiveWindow(active);
+		}
+	}
+}
+
 
 //Main Program Loop
 setInterval(function() {
@@ -217,10 +240,9 @@ function tickWindows() {
 }
 
 
-function mainLoop() {
+function mainLoop() {	
 	tickWindows();
 	drawWindows();
-	globalTimer++;
 	
 	//Generating start windows
 	if (tempVar > 0) {
@@ -237,6 +259,13 @@ function mainLoop() {
 		}
 		tempVar-=0.25;
 	}
+	
+	deleteWindows();
+	
+	if (tempVar == 0 && windows.length == 0) {
+		createWindow(100,50,7,6,false,false,"terminal");
+	}
+	globalTimer++;
 }
 
 function mouseCollide(x,y,width,height) {
@@ -260,6 +289,16 @@ function hoverHeld() {
 		}
 	}
 	return -1;
+}
+
+function hoverClose() {
+	for (i = windows.length-1; i > -1; i--) {
+		if (mouseCollide(windows[i].x+windows[i].sx * tileScale-50,windows[i].y-tileScale/3,10,tileScale/4)) {
+			deletions.push(windows[i].id);
+			return true;
+		}
+	}
+	return false;
 }
 
 function hoverWindow() {
@@ -315,9 +354,19 @@ window.addEventListener('message', function(event) {
 	}
 	if (event.data.type == "terminal") {
 		if (windows[getWindowIndexByID(event.data.id)].program == "terminal") {
-			if (event.data.request == "new") {
+			if (event.data.request == "run") {
 				createWindow(100,50,8,7,false,false,event.data.data);
-				windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   started program "+event.data.data}, '*'); 
+				windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   ran program "+event.data.data}, '*'); 
+			}			
+			if (event.data.request == "kill") {
+				if (!isNaN(event.data.data+"") && (event.data.data+"").toString().indexOf('.') != -1) {
+					deletions.push(event.data.data);
+					windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   killed program of id "+event.data.data}, '*');
+				} else {
+					kills = getWindowIndiciesByProgram(event.data.data);
+					deletions = deletions.concat(kills)
+					windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   killed all programs of type "+event.data.data}, '*');
+				}
 			}
 		}
 	}
@@ -339,6 +388,10 @@ $(canvas)
 			mouseY = parseInt(e.touches[0].pageY);
 		}
 		touch = true;
+		
+		if (hoverClose()) {
+			return;
+		}
 		
 		held = hoverHeld();
 		if (held != -1) {

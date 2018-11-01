@@ -94,12 +94,26 @@
 					commandHistory.push("   Commands:");
 					commandHistory.push("     help: shows this menu");
 					commandHistory.push("     cls:  clears the screen");
-					commandHistory.push("     js:  enter the javascript terminal");
-					commandHistory.push("     new <program>:  stars a program");
+					commandHistory.push("     run <program>:  stars a program");
+					commandHistory.push("     kill <program_id>/<program>/*:  kills program by");
+					commandHistory.push("       float id or all programs of type specified");
+					commandHistory.push("     programs:  lists all programs");
 					found = true;
 				}
-				if (msg.substring(0,3) == "new") {
-					window.parent.postMessage({type:"terminal",request:"new",data:msg.substring(4),id:id}, '*');
+				if (msg.substring(0,3) == "run") {
+					window.parent.postMessage({type:"terminal",request:"run",data:msg.substring(4),id:id}, '*');
+					found = true;
+				}				
+				if (msg.substring(0,4) == "kill") {
+					window.parent.postMessage({type:"terminal",request:"kill",data:msg.substring(5),id:id}, '*');
+					found = true;
+				}
+				if (msg == "programs") {
+					commandHistory.push("   Programs:");
+					commandHistory.push("     demo: just a test");
+					commandHistory.push("     demoError: an error test");
+					commandHistory.push("     terminal: terminal program");
+					commandHistory.push("   Type 'run <program>' to run a program");
 					found = true;
 				}
 				if (!found) {
