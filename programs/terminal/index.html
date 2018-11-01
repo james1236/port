@@ -1,0 +1,146 @@
+<body>
+<style>
+	@font-face {
+	  font-family: 'font';
+	  src: url('font.woff') format('woff'),
+	   url('font.ttf') format('truetype');
+	}  		
+	html * {
+		font-family: font;
+	}
+	
+</style>
+<canvas id="canvas" style="top:0px;left:0px;position: fixed;"></canvas>
+<input type="text" id="textInput" maxlength="60" autocomplete="off" style="position: fixed;bottom: 12px;left: 13px;height: 30px; width: calc(100% - 25px); border: 1px solid #666;background: rgba(255,255,255,0.1);color: #fff;text-align: center; font-size: 19px; text-align: left; padding:5px; color: #0f0"></input>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script>
+
+	function scaleCanvas() {
+		canvas.width = window.innerWidth; 
+		canvas.height = window.innerHeight;
+
+		canvas.style.width = Math.round(canvas.width)+"px";
+		canvas.style.height = Math.round(canvas.height)+"px";
+	}
+	
+	try {
+		//Window specific code	
+		var canvas = document.getElementById("canvas");
+		var context = canvas.getContext('2d');
+		var id;
+		var error;
+		var commandHistory = [
+			"> Type 'help' for more info",
+		];
+		
+		function scaleCanvas() {
+			canvas.width = window.innerWidth; 
+			canvas.height = window.innerHeight;
+
+			canvas.style.width = Math.round(canvas.width)+"px";
+			canvas.style.height = Math.round(canvas.height)+"px";
+		}
+		
+		scaleCanvas();
+	
+		function init() {		
+			if (error != undefined) {
+				throw error;
+			}
+			tick();
+		}
+
+		function tick() {
+			if (error != undefined) {
+				throw error;
+			}
+			
+			//BG
+			context.fillStyle = "#000";
+			context.fillRect(0,0,canvas.width,canvas.height);
+			
+			
+			//Text
+			context.fillStyle = "#0f0";
+			context.font = "24px font";
+			context.textAlign = "left";
+			if (commandHistory.length < 13) {
+				min = 0;
+			} else {
+				min = commandHistory.length - 13;
+			}
+			for (i = min; i < commandHistory.length; i++) {
+				context.fillText(commandHistory[i],10,25+(25*(i-min)));
+			}
+			context.fillStyle = "#000";
+		}
+
+		$(canvas)
+			.bind('touchstart mousedown',function(e){
+				//alert("touch");
+			});
+			
+		$("#textInput").on('keydown', function (e) {
+			if (e.keyCode == 13) {
+				msg = $("#textInput").val();
+				$("#textInput").val('');
+				commandHistory.push("> "+msg);
+				found = false;
+				if (msg == "cls") {
+					commandHistory = [];
+					found = true;
+				}
+				if (msg == "help") {
+					commandHistory.push("   Commands:");
+					commandHistory.push("     help: shows this menu");
+					commandHistory.push("     cls:  clears the screen");
+					commandHistory.push("     js:  enter the javascript terminal");
+					commandHistory.push("     new <program>:  stars a program");
+					found = true;
+				}
+				if (msg.substring(0,3) == "new") {
+					window.parent.postMessage({type:"terminal",request:"new",data:msg.substring(4),id:id}, '*');
+					found = true;
+				}
+				if (!found) {
+					commandHistory.push("   Error: Unkown command");
+				}
+			}
+		});
+			
+		//Recive data from main
+		window.addEventListener('message', function(event) { 
+			if (event.data.type == "init") {
+				window.parent.postMessage({type:"init",data:id}, '*');
+				id = event.data.id;
+				init();
+			}
+			if (event.data.type == "tick") {
+				tick();
+			}
+			if (event.data.type == "image") {
+				window.parent.postMessage({type:"image",data:canvas.toDataURL('png'),id:id}, '*');
+			}
+			if (event.data.type == "history") {
+				commandHistory.push(event.data.data);
+			}
+		}); 
+			
+	} catch (e) {
+		console.log(e);
+		//Error screen
+		var canvas = document.getElementById("canvas");
+		var context = canvas.getContext('2d');
+		scaleCanvas();
+		context.textAlign = "center";
+		context.fillStyle = "red"
+		context.fillRect(0,0,canvas.width,canvas.height);
+		context.fillStyle = "white";
+		context.font = "32px font";
+		context.fillText("ERROR",canvas.width/2,canvas.height/2.5);
+		context.font = "12px arial";
+		context.fillText(e,canvas.width/2,canvas.height/1.5);
+		error = e;
+	}
+</script>
+</body>

@@ -4,7 +4,11 @@ inspired by http://daydun.com/'s terminal portfolio and other projects
 
 //save windows array between sessions (contains all programs local vars too)
 
-//cannot create 2 windows in the same tick for some reason ;/
+//cannot create windows quickly without loading issues
+//should have terminal program with special perms to manage other window content (same as un-unmaximizable desktop program behind everything)
+//perms work through special windowcontent messages that only work if the id's window has that flag set? or only if it has a certian program type
+//opening the site should yeild a boot screen and the whole thing should feel fluid and consistent between sessions
+//log in program that loads your session from the server and saves it to it too.
 
 var canvas = document.getElementById('canvas');
 var context = canvas.getContext('2d');
@@ -57,11 +61,10 @@ function getWindowIndexByID(id) {
 	}
 }
 
-function createWindow(x,y,z,sx,sy,mx,mn,program) {
+function createWindow(x,y,sx,sy,mx,mn,program) {
 	windows.push({
 		x:x,
 		y:y,
-		z:z,
 		sx:sx,
 		sy:sy,
 		mx:mx,
@@ -138,11 +141,12 @@ function drawWindow(i) {
 	}
 	
 	//title
-	context.globalAlpha = 0.5;
+	context.globalAlpha = 0.4;
 	context.textAlign = "left";
 	context.fillStyle = "#fff";
 	context.font = "24px font";
 	context.fillText(windows[i].program,windows[i].x+35,windows[i].y-7);
+	context.fillText(windows[i].program+" "+windows[i].id,windows[i].x+35,windows[i].y-7);
 	context.globalAlpha = 1;
 	
 	
@@ -221,10 +225,14 @@ function mainLoop() {
 	//Generating start windows
 	if (tempVar > 0) {
 		if (tempVar % 1 == 0) {
-			if (tempVar != 1) {
-				createWindow(100+((5-tempVar)*100),50+((5-tempVar)*50),0,8-(5-tempVar),Math.round(7-(5-tempVar)/0.75),false,false,"demo");
+			if (tempVar == 4) {
+				createWindow(100+((5-tempVar)*100),50+((5-tempVar)*50),8-(5-tempVar),Math.round(7-(5-tempVar)/0.75),false,false,"terminal");
 			} else {
-				createWindow(100+((5-tempVar)*100),50+((3-tempVar)*50),0,8-(3-tempVar),Math.round(7-(3-tempVar)/0.75),false,false,"demoError");
+				if (tempVar != 1) {
+					createWindow(100+((5-tempVar)*100),50+((5-tempVar)*50),8-(5-tempVar),Math.round(7-(5-tempVar)/0.75),false,false,"demo");
+				} else {
+					createWindow(100+((5-tempVar)*100),50+((3-tempVar)*50),8-(3-tempVar),Math.round(7-(3-tempVar)/0.75),false,false,"demoError");
+				}
 			}
 		}
 		tempVar-=0.25;
@@ -247,7 +255,7 @@ function mouseCollide(x,y,width,height) {
 
 function hoverHeld() {
 	for (i = windows.length-1; i > -1; i--) {
-		if (mouseCollide(windows[i].x,windows[i].y-tileScale,windows[i].sx * tileScale,tileScale)) {
+		if (mouseCollide(windows[i].x,windows[i].y-tileScale/2,windows[i].sx * tileScale,tileScale/2)) {
 			return i;
 		}
 	}
@@ -261,7 +269,7 @@ function hoverWindow() {
 	}
 	for (i = 0; i < windows.length; i++) {
 		if (active != i) {
-			if (mouseCollide(windows[i].x,windows[i].y,windows[i].sx * tileScale,windows[active].sy * tileScale)) {
+			if (mouseCollide(windows[i].x,windows[i].y,windows[i].sx * tileScale,windows[i].sy * tileScale)) {
 				setActiveWindow(i);
 				return true;
 			}
@@ -304,6 +312,14 @@ window.addEventListener('message', function(event) {
 	}
 	if (event.data.type == "init") {
 		windows[getWindowIndexByID(event.data.data)].initiated = true;
+	}
+	if (event.data.type == "terminal") {
+		if (windows[getWindowIndexByID(event.data.id)].program == "terminal") {
+			if (event.data.request == "new") {
+				createWindow(100,50,8,7,false,false,event.data.data);
+				windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   started program "+event.data.data}, '*'); 
+			}
+		}
 	}
 }); 
 
