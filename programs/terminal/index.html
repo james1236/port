@@ -11,7 +11,7 @@
 	
 </style>
 <canvas id="canvas" style="top:0px;left:0px;position: fixed;"></canvas>
-<input type="text" id="textInput" maxlength="60" autocomplete="off" style="position: fixed;bottom: 12px;left: 13px;height: 30px; width: calc(100% - 25px); border: 1px solid #666;background: rgba(255,255,255,0.1);color: #fff;text-align: center; font-size: 19px; text-align: left; padding:5px; color: #0f0"></input>
+<input type="text" id="textInput" maxlength="60" autocomplete="off" style="position: fixed;bottom: 12px;left: 13px;height: 30px; width: calc(100% - 25px); border: 1px solid #666;background: rgba(255,255,255,0.1);color: #fff;text-align: center; font-size: 19px; text-align: left; padding:5px; color: #0f0; outline: none;"></input>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script>
 
@@ -73,6 +73,8 @@
 				context.fillText(commandHistory[i],10,25+(25*(i-min)));
 			}
 			context.fillStyle = "#000";
+			
+			document.getElementById("textInput").focus();
 		}
 
 		$(canvas)
