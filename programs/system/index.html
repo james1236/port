@@ -1,0 +1,134 @@
+<body>
+<style>
+	@font-face {
+	  font-family: 'font';
+	  src: url('font.woff') format('woff'),
+	   url('font.ttf') format('truetype');
+	}  		
+	html * {
+		font-family: font;
+	}
+	
+</style>
+<canvas id="canvas" style="top:0px;left:0px;position: fixed;"></canvas>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script>
+
+	function scaleCanvas() {
+		canvas.width = window.innerWidth; 
+		canvas.height = window.innerHeight;
+
+		canvas.style.width = Math.round(canvas.width)+"px";
+		canvas.style.height = Math.round(canvas.height)+"px";
+	}
+	
+	try {
+		//Window specific code	
+		var canvas = document.getElementById("canvas");
+		var context = canvas.getContext('2d');
+		var id;
+		var error;
+		var type;
+		
+		function scaleCanvas() {
+			canvas.width = window.innerWidth; 
+			canvas.height = window.innerHeight;
+
+			canvas.style.width = Math.round(canvas.width)+"px";
+			canvas.style.height = Math.round(canvas.height)+"px";
+		}
+		
+		scaleCanvas();
+	
+		function init() {		
+			if (error != undefined) {
+				throw error;
+			}
+			tick();
+		}
+
+		function tick() {
+			if (error != undefined) {
+				throw error;
+			}
+			
+			//BG
+			context.fillStyle = "#fff";
+			context.fillRect(0,0,canvas.width,canvas.height);
+			
+			//Text
+			line = 0;
+			context.fillStyle = "#000";
+			context.font = "24px font";
+			context.textAlign = "left";
+			if (type != undefined) {
+				context.fillText("System: "+type,10,25+(25*line));
+			} else {
+				context.fillText("System: Page not specified",10,25+(25*line));
+			}
+			line++;
+			context.fillText("____________________________________________________________________________________",10,25+(25*line));
+			line+=2;
+			
+			pageFound = false;
+			if (type == "externalInfo") {
+				context.fillText("    Windows marked with an '!' are not specifically",10,25+(25*line));
+				line++;
+				context.fillText("    designed for use on this website.",10,25+(25*line));
+				line++;
+				context.fillText("    As a result, these windows may not look right,",10,25+(25*line));
+				line++;
+				context.fillText("    may not be visible when inactive, may contain",10,25+(25*line));
+				line++;
+				context.fillText("    unsafe content, may run in the background" ,10,25+(25*line));
+				line++;
+				context.fillText("    even when inactive and may run incorrectly.",10,25+(25*line));
+				line++;
+				pageFound = true;
+			}
+			if (!pageFound && type != undefined) {
+				context.fillText("    Page not found",10,25+(25*line));
+				line++;
+			}
+		}
+
+		$(canvas)
+			.bind('touchstart mousedown',function(e){
+				//alert("touch");
+			});
+			
+			
+		//Recive data from main
+		window.addEventListener('message', function(event) { 
+			if (event.data.type == "init") {
+				window.parent.postMessage({type:"init",data:id}, '*');
+				id = event.data.id;
+				type = event.data.initInfo;
+				init();
+			}
+			if (event.data.type == "tick") {
+				tick();
+			}
+			if (event.data.type == "image") {
+				window.parent.postMessage({type:"image",data:canvas.toDataURL('png'),id:id}, '*');
+			}
+		}); 
+			
+	} catch (e) {
+		console.log(e);
+		//Error screen
+		var canvas = document.getElementById("canvas");
+		var context = canvas.getContext('2d');
+		scaleCanvas();
+		context.textAlign = "center";
+		context.fillStyle = "red"
+		context.fillRect(0,0,canvas.width,canvas.height);
+		context.fillStyle = "white";
+		context.font = "32px font";
+		context.fillText("ERROR",canvas.width/2,canvas.height/2.5);
+		context.font = "12px arial";
+		context.fillText(e,canvas.width/2,canvas.height/1.5);
+		error = e;
+	}
+</script>
+</body>

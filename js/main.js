@@ -10,6 +10,11 @@ inspired by http://daydun.com/'s terminal portfolio and other projects
 //opening the site should yeild a boot screen and the whole thing should feel fluid and consistent between sessions
 //log in program that loads your session from the server and saves it to it too.
 
+/* 
+fileSystem var is saved online and encrypted with your password (hashed?) so the password is never saved or anything and your data is only ever accessible using it. add a slight constant salt to all passwords
+
+
+*/
 var canvas = document.getElementById('canvas');
 var context = canvas.getContext('2d');
 
@@ -22,6 +27,8 @@ var keysPressed = {};
 var held;
 var heldStart;
 var active = -1;
+
+var taskBarOpacity = 0;
 
 var globalTimer = 0;
 
@@ -37,7 +44,6 @@ var textureMap = {
 	"bar":[176,0,16,16],
 	"task":[192,0,48,16],
 	"hide":[240,0,16,16],
-	"down":[0,16,16,16],
 }
 
 var tileScale = 64;
@@ -45,6 +51,8 @@ var tileScale = 64;
 var windows = [];
 
 var deletions = [];
+
+var fileSystem = [];
 
 function getWindowIndiciesByProgram(program) {
 	output = [];
@@ -65,7 +73,14 @@ function getWindowIndexByID(id) {
 	}
 }
 
-function createWindow(x,y,sx,sy,maximized,minimized,program) {
+function createWindow(x,y,sx,sy,maximized,minimized,program,initInfo) {
+	if (x == -1) {
+		x = randInt(Math.round(canvas.width-sx*tileScale));
+	}	
+	if (y == -1) {
+		y = randInt(Math.round(canvas.height-sy*tileScale));
+	}
+	
 	windows.push({
 		x:x,
 		y:y,
@@ -80,7 +95,9 @@ function createWindow(x,y,sx,sy,maximized,minimized,program) {
 		active:false,
 		escapable:true,
 		tangible:true,
-		stateChangeTime:0,
+		stateChangeTime:globalTimer,
+		creationTime:globalTimer,
+		initInfo:initInfo,
 	});
 	
 	setActiveWindow(windows.length-1);
@@ -164,7 +181,7 @@ function drawWindow(i) {
 	context.fillText("- \u25A1 x",windows[i].x+windows[i].sx*tileScale-40,windows[i].y-9);
 	
 	//imported icon
-	if (!windows[i].initiated) {
+	if (!windows[i].initiated && globalTimer - windows[i].creationTime > 10) {
 		context.globalAlpha = 0.8;
 		context.font = "20px font";
 		context.fillText("!",windows[i].x+windows[i].sx*tileScale-40-tileScale/1.4,windows[i].y-9);
@@ -200,26 +217,43 @@ function drawTaskbar() {
 			break;
 		}
 	}
-	if (!draw) {return}
+	if (!draw) {
+		if (taskBarOpacity == 0) {
+			return;
+		} else {
+			taskBarOpacity-=2;
+		}
+	}
+	if (taskBarOpacity < 10) {
+		taskBarOpacity+=1;
+	}
 	
+	context.globalAlpha = taskBarOpacity/10;
 	for (pix = 0; pix < canvas.width; pix+=tileScale) {
 		context.drawImage(spritesheet,textureMap["bar"][0],textureMap["bar"][1],textureMap["bar"][2],textureMap["bar"][3],pix,canvas.height-tileScale/1.1,tileScale,tileScale);
 	}
-	task = 0
+	task = 0;
 	for (wi = 0; wi < windows.length; wi++) {
 		if (windows[wi].minimized) {
 			context.drawImage(spritesheet,textureMap["task"][0],textureMap["task"][1],textureMap["task"][2],textureMap["task"][3],task*(tileScale*3),canvas.height-tileScale/1.1,tileScale*3,tileScale);
 			
+			if (taskBarOpacity >= 2) {
+				context.globalAlpha = (taskBarOpacity-2)/10;
+			} else {
+				context.globalAlpha = 0;
+			}
 			context.globalAlpha = 0.8;
 			context.textAlign = "center";
 			context.fillStyle = "#fff";
 			context.font = "24px font";
 			context.fillText(windows[wi].program,task*(tileScale*3)+tileScale*1.5,canvas.height-tileScale/1.1+tileScale/1.7);
-			context.globalAlpha = 1;
+			
+			context.globalAlpha = taskBarOpacity/10;
 			
 			task++;
 		}
 	}
+	context.globalAlpha = 1;
 }
 
 function scaleCanvas(canvasElem,sx,sy,light) {
@@ -243,8 +277,10 @@ scaleCanvas();
 
 function deleteWindows() {
 	while (deletions.length > 0) {
-		windows[getWindowIndexByID(deletions[0])].iframe.remove();
-		windows.splice(getWindowIndexByID(deletions[0]),1);
+		if (windows[getWindowIndexByID(deletions[0])]) {
+			windows[getWindowIndexByID(deletions[0])].iframe.remove();
+			windows.splice(getWindowIndexByID(deletions[0]),1);
+		}
 		deletions.shift();
 		
 		if (active > windows.length-1) {
@@ -265,7 +301,7 @@ function minimizeWindow(id) {
 	}
 }
 
-function unminimizeWindow(id) {
+function restoreWindow(id) {
 	if (!windows[getWindowIndexByID(id)].minimized) {return}
 	windows[getWindowIndexByID(id)].minimized = false;
 	windows[getWindowIndexByID(id)].tangible = true;
@@ -289,12 +325,13 @@ function tickWindows() {
 		windows[wi].iframe.style.top = windows[wi].y+"px";
 		windows[wi].iframe.style.left = (windows[wi].x+(tileScale/8))+"px";
 		
-		if (parseFloat(windows[wi].iframe.style.opacity) != 1) {
-			windows[wi].iframe.style.opacity = parseFloat(windows[windows.length-1].iframe.style.opacity) + 0.1;
+		//Fade in iframe 
+		if (parseFloat(windows[wi].iframe.style.opacity) < 1) {
+			windows[wi].iframe.style.opacity = parseFloat(windows[wi].iframe.style.opacity) + 0.1;
 		}
 		if (!windows[wi].initiated) {
 			try {
-				windows[wi].iframe.contentWindow.postMessage({type:"init",id:windows[wi].id}, '*'); 
+				windows[wi].iframe.contentWindow.postMessage({type:"init",id:windows[wi].id,initInfo:windows[wi].initInfo}, '*'); 
 			} catch (e) {
 				console.log(e);
 			}
@@ -362,6 +399,10 @@ function hoverWindowManagement() {
 			}
 			if (mouseCollide(windows[i].x+windows[i].sx*tileScale-40-tileScale/2.4,windows[i].y-9-tileScale/6,12,12)) {
 				//maximizeWindow(windows[i].id);
+				//return true;
+			}			
+			if (!windows[i].initiated && globalTimer - windows[i].creationTime > 10 && mouseCollide(windows[i].x+windows[i].sx*tileScale-40-tileScale/1.19,windows[i].y-9-tileScale/5.5,12,12)) {
+				createWindow(-1,-1,7,4,false,false,"system","externalInfo");
 				return true;
 			}
 		}
@@ -409,13 +450,15 @@ function setActiveWindow(index) {
 	active = index;
 	for (i = windows.length-1; i > -1; i--) {
 		if (i != index) {
-			windows[i].iframe.style.pointerEvents = "none";
-			windows[i].iframe.style.display = "none";
-			windows[i].active = false;
-			windows[i].stateChangeTime = globalTimer;
-			
-			//Request Image
-			windows[i].iframe.contentWindow.postMessage({type:"image"}, '*'); 
+			if (windows[i].active) {
+				windows[i].iframe.style.pointerEvents = "none";
+				windows[i].iframe.style.display = "none";
+				windows[i].active = false;
+				windows[i].stateChangeTime = globalTimer;
+				
+				//Request Image
+				windows[i].iframe.contentWindow.postMessage({type:"image"}, '*'); 
+			}
 		} else {
 			windows[i].iframe.style.pointerEvents = "auto";
 			windows[i].iframe.style.display = "block";
@@ -446,21 +489,30 @@ window.addEventListener('message', function(event) {
 		windows[getWindowIndexByID(event.data.data)].initiated = true;
 	}
 	if (event.data.type == "terminal") {
-		if (windows[getWindowIndexByID(event.data.id)].program == "terminal") {
+		if (getWindowIndexByID(event.data.id) == undefined || windows[getWindowIndexByID(event.data.id)].program == "terminal") {
 			if (event.data.request == "run") {
-				createWindow(100,50,8,7,false,false,event.data.data);
-				windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   ran program "+event.data.data}, '*'); 
-			}			
-			if (event.data.request == "kill") {
-				if (!isNaN(event.data.data+"") && (event.data.data+"").toString().indexOf('.') != -1) {
-					deletions.push(event.data.data);
-					windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   killed program of id "+event.data.data}, '*');
+				if (event.data.data.split(" ").length == 1) {
+					createWindow(-1,-1,8,7,false,false,event.data.data);
+					windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   ran program '"+event.data.data+"'"}, '*');
 				} else {
-					kills = getWindowIndiciesByProgram(event.data.data);
-					deletions = deletions.concat(kills)
-					windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   killed all programs of type "+event.data.data}, '*');
+					createWindow(-1,-1,8,7,false,false,event.data.data.split(" ")[0],event.data.data.split(" ")[1]);
+					windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   ran program '"+event.data.data.split(" ")[0]+"' with parameter '"+event.data.data.split(" ")[1]+"'"}, '*');
 				}
 			}
+			if (event.data.request == "kill") {
+				//Single window selected by ID or *
+				if (!isNaN(event.data.data+"") && (event.data.data+"").toString().indexOf('.') != -1) {
+					deletions.push(event.data.data);
+					windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   killed program of id '"+event.data.data+"'"}, '*');
+				} else {
+					//Multiple windows selected by program type
+					kills = getWindowIndiciesByProgram(event.data.data);
+					deletions = deletions.concat(kills)
+					windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   killed all programs of type '"+event.data.data+"'"}, '*');
+				}
+			}			
+		} else {
+			windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   Error: '"+windows[getWindowIndexByID(event.data.id)].program+"' cannot perform this action"}, '*'); 
 		}
 	}
 }); 
@@ -494,7 +546,7 @@ $(canvas)
 		}
 		
 		if (!hoverWindow()) {
-			unminimizeWindow(hoverTaskbar());
+			restoreWindow(hoverTaskbar());
 		}
 	})
 	

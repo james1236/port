@@ -11,7 +11,7 @@
 	
 </style>
 <canvas id="canvas" style="top:0px;left:0px;position: fixed;"></canvas>
-<input type="text" id="textInput" maxlength="60" autocomplete="off" style="position: fixed;bottom: 12px;left: 13px;height: 30px; width: calc(100% - 25px); border: 1px solid #666;background: rgba(255,255,255,0.1);color: #fff;text-align: center; font-size: 19px; text-align: left; padding:5px; color: #0f0; outline: none;"></input>
+<input type="text" id="textInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="position: fixed;bottom: 12px;left: 13px;height: 30px; width: calc(100% - 25px); border: 1px solid #666;background: rgba(255,255,255,0.1);color: #fff;text-align: center; font-size: 19px; text-align: left; padding:5px; color: #0f0; outline: none;"></input>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script>
 
@@ -96,7 +96,7 @@
 					commandHistory.push("   Commands:");
 					commandHistory.push("     help: shows this menu");
 					commandHistory.push("     cls:  clears the screen");
-					commandHistory.push("     run <program>:  stars a program");
+					commandHistory.push("     run <program> [parameter]:  stars a program");
 					commandHistory.push("     kill <program_id>/<program>/*:  kills program by");
 					commandHistory.push("       float id or all programs of type specified");
 					commandHistory.push("     programs:  lists all programs");
@@ -109,12 +109,13 @@
 				if (msg.substring(0,4) == "kill") {
 					window.parent.postMessage({type:"terminal",request:"kill",data:msg.substring(5),id:id}, '*');
 					found = true;
-				}
+				}				
 				if (msg == "programs") {
 					commandHistory.push("   Programs:");
 					commandHistory.push("     demo: just a test");
 					commandHistory.push("     demoError: an error test");
 					commandHistory.push("     terminal: terminal program");
+					commandHistory.push("     system: info and settings");
 					commandHistory.push("   Type 'run <program>' to run a program");
 					found = true;
 				}
