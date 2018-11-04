@@ -55,42 +55,48 @@
 			var pages = [
 				{
 					page:"techInfo",
-					x:-20,
 					lines:[
-						"    Part 1 of 2: (Find part 2 at techInfo2)",
-						"    This is a simple mock operating system for browsers where",
-						"    windows are simply iframed pages. Each window's iframe is",
-						"    hidden and their updates disabled when inactive. This",
-						"    iframe is usually replaced with an image of the canvas's",
-						"    previous state however with cross origin issues and",
-						"    failed page loads, this can sometimes not show up.",
+						" Part 1 of 2: (Find part 2 at techInfo2)",
+						" This is a simple mock operating system for browsers where",
+						" windows are simply iframed pages. Each window's iframe is",
+						" hidden and their updates disabled when inactive. This",
+						" iframe is usually replaced with an image of the canvas's",
+						" previous state however with cross origin issues and",
+						" failed page loads, this can sometimes not show up.",
 						"",
-						"    Each window has a program name and a float ID (shown on",
-						"    it's handle). Creating an application for this service is",
-						"    very simple, simply create a webpage as usual but call your",
-						"    graphics update function tick(). Communicating with the",
-						"    main page is done through postMessage, so make sure to copy",
-						"    triggers from the demo program such as init and tick to keep",
-						"    things working properly! ",
+						" Each window has a program name and a float ID (shown on",
+						" it's handle). While most webpages will work as windows,",
+						" creating a program specifically for this service is",
+						" very simple. Simply modify the demo program's code.",
+						" Communicating with the main page uses postMessage",
+						" senders and listeners to avoid cross origin issues",
 					]
 				},					
 				{
 					page:"techInfo2",
-					x:-20,
 					lines:[
-						"    Part 2 of 2:",
-						"    Currently, special permissions are given to the terminal",
-						"    program, allowing it to do things like create and delete",
-						"    other windows. A full permissions system with requests",
-						"    is planned, as is online session storage encrpyted",
-						"    with the users hashed and salted password",
+						" Part 2 of 2:",
+						" Currently, special permissions are given to postMessages",
+						" from the terminal program, allowing it to do things like",
+						" create and kill other windows. A full permissions system",
+						" with user requests is planned, as is online session",
+						" storage encrpyted with the users hashed and salted",
+						" password, a filesystem with permenance and a market for",
+						" getting and releasing programs specific to the service.",
+						"",
+						" Whether this is just a gimmicky fun way of creating",
+						" and viewing web apps, the beginning of a game or anything",
+						" else is not yet planned. Make what you will of it and",
+						" feel free to contribute on github by creating programs",
+						" or modifying any other aspects of the project.",
+						" https://github.com/james1236/port",
 					]
 				},				
 				{
 					page:"externalInfo",
 					lines:[
 						"    Windows marked with an '!' are not specifically",
-						"    designed for use on this website.",
+						"    designed for use on this service.",
 						"    As a result, these windows may not look right,",
 						"    may not be visible when inactive, may contain",
 						"    unsafe content, may run in the background",
@@ -134,9 +140,8 @@
 			
 			if (pageFound != -1) {
 				for (li = 0; li < pages[pageFound].lines.length; li++) {
-					xmod = (pages[pageFound].x == undefined) ? 0 : pages[pageFound].x;
 					spacer = (li) ? 5 : 0;
-					context.fillText(pages[pageFound].lines[li],10+xmod,25+(25*line)+spacer);
+					context.fillText(pages[pageFound].lines[li],10,25+(25*line)+spacer);
 					line++;
 				}
 			} else {

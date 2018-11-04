@@ -14,6 +14,26 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script>
 
+	/*
+		Example program showing how to create your own
+		
+		Keep in mind:
+		
+		* Your folder name is what the program is called, this base file must be called index.html
+		* Avoid drawing any resources from external sites to canvas due to cross origin issues blocking the capture of a tainted canvas.
+		* None of this protocol is mandatory and any site should load as a window. Meeting this protocol does however provide significantly improved functionality and user experience. Here are some potential issues with programs that do not meet protocol:
+			- Inactive window image will not show up
+			- Program will run even when inactive, causing lag issues especially when multiple windows are open
+			- Scaling (especially when maximizing) will not work
+			- Any features current or planned that involve communication between the main page and the program will not work
+			- Mismatch in style and design aswell as features unexpectedly not working
+			- An exclamation mark will appear next to window management controls that when clicked will warn the user of these issues
+			
+		* You can commit your program folder to the programs folder in the github (https://github.com/james1236/port) although an intuitive way of browsing other's programs and adding them to your session is planned.
+		* Any program in the programs folder can be ran using the terminal although it won't currently show up when 'programs' is run unless the terminal programs command's output is directly modified.
+	
+	*/
+	
 	//Standard Rescaling Function
 	function scaleCanvas() {
 		canvas.width = window.innerWidth; 
@@ -45,6 +65,9 @@
 			//Demo code
 			initialized = true;
 			tickCounter = 0;
+			
+			//Running 1 tick after init to show graphics
+			tick();
 		}
 
 		//Function called every tick while the window is active (avoid setInterval to allow the main program to manage resources)
@@ -97,7 +120,6 @@
 			
 		//Reciving communication from main program listener.
 		//Although these example triggers are important for the end user experience they are not required.
-		//Any webpage could be used with the program although it wouldn't work very well.
 		
 		window.addEventListener('message', function(event) { 
 			//Main requesting window to initialize, window gets given it's own id and replys back
