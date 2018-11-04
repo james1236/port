@@ -1,4 +1,5 @@
 <body>
+<!-- Example font used throughout the main and default programs -->
 <style>
 	@font-face {
 	  font-family: 'font';
@@ -13,6 +14,7 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script>
 
+	//Standard Rescaling Function
 	function scaleCanvas() {
 		canvas.width = window.innerWidth; 
 		canvas.height = window.innerHeight;
@@ -22,52 +24,53 @@
 	}
 	
 	try {
-		//Window specific code	
+		//Standard Variables
 		var canvas = document.getElementById("canvas");
 		var context = canvas.getContext('2d');
-		var tickCounter;
 		var id;
 		var error;
 		
-		function scaleCanvas() {
-			canvas.width = window.innerWidth; 
-			canvas.height = window.innerHeight;
-
-			canvas.style.width = Math.round(canvas.width)+"px";
-			canvas.style.height = Math.round(canvas.height)+"px";
-		}
-		
 		scaleCanvas();
+		
+		//Demo vars
+		var tickCounter;
+		var initialized = false;
 	
+		//Highly reccomended function (called upon window creation)
 		function init() {		
 			if (error != undefined) {
 				throw error;
 			}
 			
-			//Blue BG
-			context.fillStyle = "#66f";
-			context.fillRect(0,0,canvas.width,canvas.height);
-			
-			//Init 
-			context.globalAlpha = 0.5;
-			context.fillStyle = "#000";
-			context.fillRect(0,0,canvas.width,100);
-			context.globalAlpha = 1;
-			
-			//Text
-			context.fillStyle = "#fff";
-			context.font = "24px font";
-			context.textAlign = "center";
-			context.fillText("Program Initialized! ",canvas.width/2,50);
-			context.fillStyle = "#000";
-			
-			//Create Tick Counter
+			//Demo code
+			initialized = true;
 			tickCounter = 0;
 		}
 
+		//Function called every tick while the window is active (avoid setInterval to allow the main program to manage resources)
 		function tick() {
 			if (error != undefined) {
 				throw error;
+			}
+			
+			//Demo code
+			if (initialized) {
+				//Blue BG
+				context.fillStyle = "#66f";
+				context.fillRect(0,0,canvas.width,canvas.height);
+				
+				//Init 
+				context.globalAlpha = 0.5;
+				context.fillStyle = "#000";
+				context.fillRect(0,0,canvas.width,100);
+				context.globalAlpha = 1;
+				
+				//Text
+				context.fillStyle = "#fff";
+				context.font = "24px font";
+				context.textAlign = "center";
+				context.fillText("Program Initialized! ",canvas.width/2,50);
+				context.fillStyle = "#000";
 			}
 		
 			//Tick Banner
@@ -86,29 +89,42 @@
 			tickCounter++;
 		}
 
+		//Click detection example
 		$(canvas)
 			.bind('touchstart mousedown',function(e){
 				alert("touch");
 			});
 			
-		//Recive data from main
+		//Reciving communication from main program listener.
+		//Although these example triggers are important for the end user experience they are not required.
+		//Any webpage could be used with the program although it wouldn't work very well.
+		
 		window.addEventListener('message', function(event) { 
+			//Main requesting window to initialize, window gets given it's own id and replys back
 			if (event.data.type == "init") {
-				window.parent.postMessage({type:"init",data:id}, '*');
 				id = event.data.id;
+				//Reply
+				window.parent.postMessage({type:"init",data:id}, '*');
 				init();
 			}
+			//Main requesting window to tick
 			if (event.data.type == "tick") {
 				tick();
 			}
+			//Main requesting window to give it's inactive image
 			if (event.data.type == "image") {
+				//Reply
 				window.parent.postMessage({type:"image",data:canvas.toDataURL('png'),id:id}, '*');
+			}
+			//Main requesting window to rescale
+			if (event.data.type == "scale") {
+				scaleCanvas();
 			}
 		}); 
 			
 	} catch (e) {
 		console.log(e);
-		//Error screen
+		//Default error screen
 		var canvas = document.getElementById("canvas");
 		var context = canvas.getContext('2d');
 		scaleCanvas();

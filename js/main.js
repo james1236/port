@@ -75,10 +75,10 @@ function getWindowIndexByID(id) {
 
 function createWindow(x,y,sx,sy,maximized,minimized,program,initInfo) {
 	if (x == -1) {
-		x = randInt(Math.round(canvas.width-sx*tileScale));
+		x = randInt(Math.round(canvas.width-sx*tileScale-25))+25;
 	}	
 	if (y == -1) {
-		y = randInt(Math.round(canvas.height-sy*tileScale));
+		y = randInt(Math.round(canvas.height-sy*tileScale-25))+25;
 	}
 	
 	windows.push({
@@ -101,8 +101,11 @@ function createWindow(x,y,sx,sy,maximized,minimized,program,initInfo) {
 	});
 	
 	setActiveWindow(windows.length-1);
-	
-	windows[windows.length-1].iframe.src = "programs/"+program+"/index.html";
+	if (!(program.substring(0,4) == "http")) {
+		windows[windows.length-1].iframe.src = "programs/"+program+"/index.html";
+	} else {
+		windows[windows.length-1].iframe.src = program;
+	}
 	windows[windows.length-1].iframe.style = "top:"+(y)+"px;left:"+(x+(tileScale/8))+"px;position: fixed; opacity: 1;";
 	windows[windows.length-1].iframe.setAttribute("id",windows[windows.length-1].id+"");
 	windows[windows.length-1].iframe.frameBorder = "0";
@@ -117,92 +120,121 @@ function createWindow(x,y,sx,sy,maximized,minimized,program,initInfo) {
 function drawWindows() {
 	//start by sorting windows by their z
 	for (i = windows.length-1; i > -1; i--) {
-		drawWindow(i);
+		if (i != active) {
+			drawWindow(i);
+		}
 	}
 	if (active != undefined && active != -1 && windows[active]) {
-		drawWindow(active);
+		drawWindow(active, true);
 	}
 }
 
-function drawWindow(i) {
+function drawWindow(i,windowActive) {
 	if (!windows[i].tangible) {return;}
+	activeTexture = 0;
+	if (windowActive) {
+		activeTexture = 16;
+	}
 	//context.fillStyle = "#999";
 	//context.fillRect(windows[i].x,windows[i].y,windows[i].sx*tileScale,windows[i].sy*tileScale);
 	
-	
-	//tl
-	context.drawImage(spritesheet,textureMap["tl"][0],textureMap["tl"][1],textureMap["tl"][2],textureMap["tl"][3],windows[i].x,windows[i].y-tileScale,tileScale,tileScale);
-	
-	//l+r
-	for (piy = 0; piy < (windows[i].sy * tileScale) - tileScale; piy+=tileScale) {
-		for (pix = 0; pix < (windows[i].sx * tileScale)+1; pix+=(windows[i].sx * tileScale)) {
-			if (pix == 0) {
-				context.drawImage(spritesheet,textureMap["l"][0],textureMap["l"][1],textureMap["l"][2],textureMap["l"][3],windows[i].x,windows[i].y+piy,tileScale,tileScale);
-			} else {
-				context.drawImage(spritesheet,textureMap["r"][0],textureMap["r"][1],textureMap["r"][2],textureMap["r"][3],windows[i].x+pix-tileScale,windows[i].y+piy,tileScale,tileScale);
+	if (!windows[i].maximized) {
+		//tl
+		context.drawImage(spritesheet,textureMap["tl"][0],textureMap["tl"][1]+activeTexture,textureMap["tl"][2],textureMap["tl"][3],windows[i].x,windows[i].y-tileScale,tileScale,tileScale);
+		
+		//l+r
+		for (piy = 0; piy < (windows[i].sy * tileScale) - tileScale; piy+=tileScale) {
+			for (pix = 0; pix < (windows[i].sx * tileScale)+1; pix+=(windows[i].sx * tileScale)) {
+				if (pix == 0) {
+					context.drawImage(spritesheet,textureMap["l"][0],textureMap["l"][1]+activeTexture,textureMap["l"][2],textureMap["l"][3],windows[i].x,windows[i].y+piy,tileScale,tileScale);
+				} else {
+					context.drawImage(spritesheet,textureMap["r"][0],textureMap["r"][1]+activeTexture,textureMap["r"][2],textureMap["r"][3],windows[i].x+pix-tileScale,windows[i].y+piy,tileScale,tileScale);
+				}
 			}
 		}
-	}
-	pix = (windows[i].sx * tileScale);
-	
-	//tr
-	context.drawImage(spritesheet,textureMap["tr"][0],textureMap["tr"][1],textureMap["tr"][2],textureMap["tr"][3],windows[i].x+pix-tileScale,windows[i].y-tileScale,tileScale,tileScale);
-	
-	//bl
-	context.drawImage(spritesheet,textureMap["bl"][0],textureMap["bl"][1],textureMap["bl"][2],textureMap["bl"][3],windows[i].x,windows[i].y+piy,tileScale,tileScale);		
-	
-	//br
-	context.drawImage(spritesheet,textureMap["br"][0],textureMap["br"][1],textureMap["br"][2],textureMap["br"][3],windows[i].x+pix-tileScale,windows[i].y+piy,tileScale,tileScale);
-	
-	//b+t
-	for (pix = tileScale; pix < (windows[i].sx * tileScale) - tileScale; pix+=tileScale) {
-		for (piy = 0; piy < (windows[i].sy * tileScale)+1; piy+=(windows[i].sy * tileScale)) {
-			if (piy == 0) {			
-				context.drawImage(spritesheet,textureMap["t"][0],textureMap["t"][1],textureMap["t"][2],textureMap["t"][3],windows[i].x+pix,windows[i].y+piy-tileScale,tileScale,tileScale);
-			} else {
-				context.drawImage(spritesheet,textureMap["b"][0],textureMap["b"][1],textureMap["b"][2],textureMap["b"][3],windows[i].x+pix,windows[i].y+piy-tileScale,tileScale,tileScale);
+		pix = (windows[i].sx * tileScale);
+		
+		//tr
+		context.drawImage(spritesheet,textureMap["tr"][0],textureMap["tr"][1]+activeTexture,textureMap["tr"][2],textureMap["tr"][3],windows[i].x+pix-tileScale,windows[i].y-tileScale,tileScale,tileScale);
+		
+		//bl
+		context.drawImage(spritesheet,textureMap["bl"][0],textureMap["bl"][1]+activeTexture,textureMap["bl"][2],textureMap["bl"][3],windows[i].x,windows[i].y+piy,tileScale,tileScale);		
+		
+		//br
+		context.drawImage(spritesheet,textureMap["br"][0],textureMap["br"][1]+activeTexture,textureMap["br"][2],textureMap["br"][3],windows[i].x+pix-tileScale,windows[i].y+piy,tileScale,tileScale);
+		
+		//b+t
+		for (pix = tileScale; pix < (windows[i].sx * tileScale) - tileScale; pix+=tileScale) {
+			for (piy = 0; piy < (windows[i].sy * tileScale)+1; piy+=(windows[i].sy * tileScale)) {
+				if (piy == 0) {			
+					context.drawImage(spritesheet,textureMap["t"][0],textureMap["t"][1]+activeTexture,textureMap["t"][2],textureMap["t"][3],windows[i].x+pix,windows[i].y+piy-tileScale,tileScale,tileScale);
+				} else {
+					context.drawImage(spritesheet,textureMap["b"][0],textureMap["b"][1]+activeTexture,textureMap["b"][2],textureMap["b"][3],windows[i].x+pix,windows[i].y+piy-tileScale,tileScale,tileScale);
+				}
 			}
 		}
-	}
-	
-	//title
-	context.globalAlpha = 0.4;
-	context.textAlign = "left";
-	context.fillStyle = "#fff";
-	context.font = "24px font";
-	context.fillText(windows[i].program,windows[i].x+35,windows[i].y-7);
-	if (windows[i].sx > 5) {
-		context.fillText(windows[i].program+" "+windows[i].id,windows[i].x+35,windows[i].y-7);
+		
+		//title
+		context.globalAlpha = 0.4;
+		context.textAlign = "left";
+		context.fillStyle = "#fff";
+		context.font = "24px font";
+		context.fillText(windows[i].program,windows[i].x+35,windows[i].y-7);
+		if (windows[i].sx > 5) {
+			context.fillText(windows[i].program+" "+windows[i].id,windows[i].x+35,windows[i].y-7);
+		} else {
+			context.fillText(windows[i].program+" "+(windows[i].id+"").substr(0,12)+"...",windows[i].x+35,windows[i].y-7);
+		}
 	} else {
-		context.fillText(windows[i].program+" "+(windows[i].id+"").substr(0,12)+"...",windows[i].x+35,windows[i].y-7);
+		context.globalAlpha = 0.4;
+		for (pix = 0; pix < canvas.width + tileScale + 1; pix+=tileScale) {
+			context.drawImage(spritesheet,textureMap["bar"][0],textureMap["bar"][1]+activeTexture,textureMap["bar"][2],textureMap["bar"][3],windows[i].x+pix,windows[i].y-tileScale,tileScale,tileScale);
+		}
 	}
+	
+	//Window Management
 	context.globalAlpha = 0.8;
+	context.fillStyle = "#fff";
 	context.textAlign = "right";
-	context.fillText("- \u25A1 x",windows[i].x+windows[i].sx*tileScale-40,windows[i].y-9);
+	if (!windows[i].maximized) {
+		if (!windows[i].initiated && globalTimer - windows[i].creationTime > 10) {
+			context.font = "20px font";
+			context.fillText("!            ",windows[i].x+windows[i].sx*tileScale-40,windows[i].y-9);
+		}
+		context.font = "24px font";
+		context.fillText("- \u25A1 x",windows[i].x+windows[i].sx*tileScale-40,windows[i].y-9);
+	} else {
+		if (!windows[i].initiated && globalTimer - windows[i].creationTime > 10) {
+			context.font = "20px font";
+			context.fillText("!            ",canvas.width-tileScale/8,windows[i].y-tileScale/20);
+		}
+		context.font = "24px font";
+		context.fillText("- \u25A1 x",canvas.width-tileScale/8,windows[i].y-tileScale/20);
+	}
 	
 	//imported icon
 	if (!windows[i].initiated && globalTimer - windows[i].creationTime > 10) {
 		context.globalAlpha = 0.8;
 		context.font = "20px font";
-		context.fillText("!",windows[i].x+windows[i].sx*tileScale-40-tileScale/1.4,windows[i].y-9);
+		//context.fillText("!",windows[i].x+windows[i].sx*tileScale-40-tileScale/1.4,windows[i].y-9);
 	}
 	context.globalAlpha = 1;
 	
 	//Seeded Random colored rect for bg of windows based on their id
 	Math.seed = windows[i].id * 1000;
 	context.fillStyle = "#"+Math.seededRandom(2,9)+""+Math.seededRandom(2,9)+""+Math.seededRandom(2,9)+"";
-	context.fillRect(windows[i].x+(tileScale/8),windows[i].y,windows[i].sx*tileScale-(tileScale/4),windows[i].sy*tileScale-(tileScale/8));
+	context.fillRect(windows[i].x+(tileScale/8),windows[i].y,windows[i].iframe.width,windows[i].iframe.height);
 		
 		
 	if (!windows[i].active) {
 		//draw screenshot for inactive windows
 		try {
-			context.drawImage(windows[i].image,windows[i].x+(tileScale/8),windows[i].y,windows[i].sx*tileScale-(tileScale/4),windows[i].sy*tileScale-(tileScale/8));
+			context.drawImage(windows[i].image,windows[i].x+(tileScale/8),windows[i].y,windows[i].iframe.width,windows[i].iframe.height);
 		} catch (e) {
 			if (globalTimer - windows[i].stateChangeTime < 10) {
 				context.globalAlpha = (globalTimer - windows[i].stateChangeTime)/10;
 			}
-			context.drawImage(spritesheet,textureMap["hide"][0],textureMap["hide"][1],textureMap["hide"][2],textureMap["hide"][3],(windows[i].x+(tileScale/8)+(windows[i].sx*tileScale-(tileScale/4))/2)-tileScale/2,(windows[i].y+(windows[i].sy*tileScale-(tileScale/8))/2)-tileScale/2,tileScale,tileScale);
+			context.drawImage(spritesheet,textureMap["hide"][0],textureMap["hide"][1],textureMap["hide"][2],textureMap["hide"][3],Math.round(windows[i].x+windows[i].iframe.width/2)-tileScale/2,Math.round(windows[i].y+windows[i].iframe.height/2)-tileScale/2,tileScale,tileScale);
 			
 			context.globalAlpha = 1;
 		}
@@ -256,6 +288,7 @@ function drawTaskbar() {
 	context.globalAlpha = 1;
 }
 
+
 function scaleCanvas(canvasElem,sx,sy,light) {
 	if (canvasElem == undefined) {
 		canvas.width = window.innerWidth; 
@@ -301,13 +334,39 @@ function minimizeWindow(id) {
 	}
 }
 
-function restoreWindow(id) {
-	if (!windows[getWindowIndexByID(id)].minimized) {return}
-	windows[getWindowIndexByID(id)].minimized = false;
-	windows[getWindowIndexByID(id)].tangible = true;
-	windows[getWindowIndexByID(id)].iframe.style.pointerEvents = "auto";
-	windows[getWindowIndexByID(id)].iframe.style.display = "block";
+function maximizeWindow(id) {
+	windows[getWindowIndexByID(id)].maximized = true;
+	windows[getWindowIndexByID(id)].iframe.width = canvas.width; 
+	windows[getWindowIndexByID(id)].iframe.height = canvas.height-tileScale/4;	
+	windows[getWindowIndexByID(id)].y = tileScale/4; 
+	windows[getWindowIndexByID(id)].x = 0-tileScale/8;
 	setActiveWindow(getWindowIndexByID(id));
+	
+	windows[getWindowIndexByID(id)].iframe.contentWindow.postMessage({type:"scale"}, '*'); 
+	
+}
+
+function restoreWindow(id) {
+	if (id == -1) {return};
+	if (windows[getWindowIndexByID(id)].minimized) {
+		windows[getWindowIndexByID(id)].minimized = false;
+		windows[getWindowIndexByID(id)].tangible = true;
+		windows[getWindowIndexByID(id)].iframe.style.pointerEvents = "auto";
+		windows[getWindowIndexByID(id)].iframe.style.display = "block";
+		setActiveWindow(getWindowIndexByID(id));
+	} else {
+		if (windows[getWindowIndexByID(id)].maximized) {
+			windows[getWindowIndexByID(id)].maximized = false;
+			windows[getWindowIndexByID(id)].iframe.width = windows[getWindowIndexByID(id)].sx*tileScale-(tileScale/4); 
+			windows[getWindowIndexByID(id)].iframe.height = windows[getWindowIndexByID(id)].sy*tileScale-(tileScale/8);
+			
+			windows[getWindowIndexByID(id)].x = randInt(Math.round(canvas.width-windows[getWindowIndexByID(id)].sx*tileScale-25))+25;
+			windows[getWindowIndexByID(id)].y = randInt(Math.round(canvas.height-windows[getWindowIndexByID(id)].sy*tileScale-25))+25;
+			
+			windows[getWindowIndexByID(id)].iframe.contentWindow.postMessage({type:"scale"}, '*'); 
+			setActiveWindow(getWindowIndexByID(id));
+		}
+	}
 }
 
 //Main Program Loop
@@ -389,19 +448,23 @@ function hoverHeld() {
 function hoverWindowManagement() {
 	for (i = windows.length-1; i > -1; i--) {
 		if (windows[i].tangible) {
-			if (mouseCollide(windows[i].x+windows[i].sx * tileScale-50,windows[i].y-tileScale/3,10,tileScale/4)) {
+			if ((!windows[i].maximized && mouseCollide(windows[i].x+windows[i].sx * tileScale-50,windows[i].y-tileScale/3,10,tileScale/4)) || (windows[i].maximized && mouseCollide(canvas.width-tileScale/3.8,windows[i].y-tileScale/4.5,12,12))) {
 				deletions.push(windows[i].id);
 				return true;
 			}
-			if (mouseCollide(windows[i].x+windows[i].sx*tileScale-40-tileScale/1.5,windows[i].y-9-tileScale/6,12,12)) {
+			if ((!windows[i].maximized && mouseCollide(windows[i].x+windows[i].sx*tileScale-40-tileScale/1.5,windows[i].y-9-tileScale/6,12,12)) || (windows[i].maximized && mouseCollide(canvas.width-tileScale/1.25,windows[i].y-tileScale/4.5,12,12))) {
 				minimizeWindow(windows[i].id);
 				return true;
 			}
-			if (mouseCollide(windows[i].x+windows[i].sx*tileScale-40-tileScale/2.4,windows[i].y-9-tileScale/6,12,12)) {
-				//maximizeWindow(windows[i].id);
-				//return true;
-			}			
-			if (!windows[i].initiated && globalTimer - windows[i].creationTime > 10 && mouseCollide(windows[i].x+windows[i].sx*tileScale-40-tileScale/1.19,windows[i].y-9-tileScale/5.5,12,12)) {
+			if ((!windows[i].maximized && mouseCollide(windows[i].x+windows[i].sx*tileScale-40-tileScale/2.4,windows[i].y-9-tileScale/6,12,12)) || (windows[i].maximized && mouseCollide(canvas.width-tileScale/1.85,windows[i].y-tileScale/4.5,12,12))) {
+				if (!windows[i].maximized) {
+					maximizeWindow(windows[i].id);
+				} else {
+					restoreWindow(windows[i].id);
+				}
+				return true;
+			}
+			if (!windows[i].initiated && globalTimer - windows[i].creationTime > 10 && ((!windows[i].maximized && mouseCollide(windows[i].x+windows[i].sx*tileScale-40-tileScale/1.19,windows[i].y-9-tileScale/5.5,12,12)) || (windows[i].maximized && mouseCollide(canvas.width-tileScale,windows[i].y-tileScale/4.5,12,12)))) {
 				createWindow(-1,-1,7,4,false,false,"system","externalInfo");
 				return true;
 			}
@@ -413,14 +476,14 @@ function hoverWindowManagement() {
 function hoverWindow() {
 	//if hover on active, don't click through
 	if (windows[active] && windows[active].tangible) {
-		if (mouseCollide(windows[active].x,windows[active].y,windows[active].sx * tileScale,windows[active].sy * tileScale)) {
+		if (mouseCollide(windows[active].x,windows[active].y,windows[active].sx * tileScale,windows[active].sy * tileScale) || windows[active].maximized) {
 			return true;
 		}
 	}
 	for (i = 0; i < windows.length; i++) {
 		if (windows[i].tangible) {
 			if (active != i) {
-				if (mouseCollide(windows[i].x,windows[i].y,windows[i].sx * tileScale,windows[i].sy * tileScale)) {
+				if (mouseCollide(windows[i].x,windows[i].y,windows[i].sx * tileScale,windows[i].sy * tileScale) || windows[i].maximized) {
 					setActiveWindow(i);
 					return true;
 				}

@@ -52,43 +52,104 @@
 				throw error;
 			}
 			
+			var pages = [
+				{
+					page:"techInfo",
+					x:-20,
+					lines:[
+						"    Part 1 of 2: (Find part 2 at techInfo2)",
+						"    This is a simple mock operating system for browsers where",
+						"    windows are simply iframed pages. Each window's iframe is",
+						"    hidden and their updates disabled when inactive. This",
+						"    iframe is usually replaced with an image of the canvas's",
+						"    previous state however with cross origin issues and",
+						"    failed page loads, this can sometimes not show up.",
+						"",
+						"    Each window has a program name and a float ID (shown on",
+						"    it's handle). Creating an application for this service is",
+						"    very simple, simply create a webpage as usual but call your",
+						"    graphics update function tick(). Communicating with the",
+						"    main page is done through postMessage, so make sure to copy",
+						"    triggers from the demo program such as init and tick to keep",
+						"    things working properly! ",
+					]
+				},					
+				{
+					page:"techInfo2",
+					x:-20,
+					lines:[
+						"    Part 2 of 2:",
+						"    Currently, special permissions are given to the terminal",
+						"    program, allowing it to do things like create and delete",
+						"    other windows. A full permissions system with requests",
+						"    is planned, as is online session storage encrpyted",
+						"    with the users hashed and salted password",
+					]
+				},				
+				{
+					page:"externalInfo",
+					lines:[
+						"    Windows marked with an '!' are not specifically",
+						"    designed for use on this website.",
+						"    As a result, these windows may not look right,",
+						"    may not be visible when inactive, may contain",
+						"    unsafe content, may run in the background",
+						"    even when inactive and may run incorrectly.",
+					]
+				},
+			];
+			
 			//BG
 			context.fillStyle = "#fff";
 			context.fillRect(0,0,canvas.width,canvas.height);
 			
 			//Text
 			line = 0;
-			context.fillStyle = "#000";
+			context.fillStyle = "#00f";
+			context.globalAlpha = 0.7;
+			context.fillRect(0,0,canvas.width,50);
+			context.globalAlpha = 0.1;
+			context.fillStyle = "#00f";
+			context.fillRect(0,50,canvas.width,35);
+			context.fillStyle = "#fff";
+			context.globalAlpha = 1;
 			context.font = "24px font";
-			context.textAlign = "left";
+			context.textAlign = "center";
 			if (type != undefined) {
-				context.fillText("System: "+type,10,25+(25*line));
+				context.fillText("System: "+type,canvas.width/2,30+(25*line));
 			} else {
-				context.fillText("System: Page not specified",10,25+(25*line));
+				context.fillText("System: Page not specified",canvas.width/2,30+(25*line));
 			}
-			line++;
-			context.fillText("____________________________________________________________________________________",10,25+(25*line));
 			line+=2;
+			context.fillStyle = "#000";
+			context.textAlign = "left";
 			
-			pageFound = false;
-			if (type == "externalInfo") {
-				context.fillText("    Windows marked with an '!' are not specifically",10,25+(25*line));
-				line++;
-				context.fillText("    designed for use on this website.",10,25+(25*line));
-				line++;
-				context.fillText("    As a result, these windows may not look right,",10,25+(25*line));
-				line++;
-				context.fillText("    may not be visible when inactive, may contain",10,25+(25*line));
-				line++;
-				context.fillText("    unsafe content, may run in the background" ,10,25+(25*line));
-				line++;
-				context.fillText("    even when inactive and may run incorrectly.",10,25+(25*line));
-				line++;
-				pageFound = true;
+			pageFound = -1;
+			for (pi = 0; pi < pages.length; pi++) {
+				if (pages[pi].page == type) {
+					pageFound = pi;
+					break;
+				}
 			}
-			if (!pageFound && type != undefined) {
-				context.fillText("    Page not found",10,25+(25*line));
+			
+			if (pageFound != -1) {
+				for (li = 0; li < pages[pageFound].lines.length; li++) {
+					xmod = (pages[pageFound].x == undefined) ? 0 : pages[pageFound].x;
+					spacer = (li) ? 5 : 0;
+					context.fillText(pages[pageFound].lines[li],10+xmod,25+(25*line)+spacer);
+					line++;
+				}
+			} else {
+				if (type != undefined) {
+					context.fillText("    Page not found",10,25+(25*line));
+					line+=2;
+				}
+				context.fillText("    Pages: (Type 'run system <page>' in terminal)",10,25+(25*line));
 				line++;
+				for (pi = 0; pi < pages.length; pi++) {
+					context.fillText("     \u2022  "+pages[pi].page,10,35+(25*line));
+					line++;
+				}
 			}
 		}
 
@@ -101,8 +162,8 @@
 		//Recive data from main
 		window.addEventListener('message', function(event) { 
 			if (event.data.type == "init") {
-				window.parent.postMessage({type:"init",data:id}, '*');
 				id = event.data.id;
+				window.parent.postMessage({type:"init",data:id}, '*');
 				type = event.data.initInfo;
 				init();
 			}
@@ -111,6 +172,9 @@
 			}
 			if (event.data.type == "image") {
 				window.parent.postMessage({type:"image",data:canvas.toDataURL('png'),id:id}, '*');
+			}
+			if (event.data.type == "scale") {
+				scaleCanvas();
 			}
 		}); 
 			

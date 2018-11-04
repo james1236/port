@@ -15,6 +15,7 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script>
 
+	//Standard Rescaling Function
 	function scaleCanvas() {
 		canvas.width = window.innerWidth; 
 		canvas.height = window.innerHeight;
@@ -24,11 +25,12 @@
 	}
 	
 	try {
-		//Window specific code	
+		//Standard Variables
 		var canvas = document.getElementById("canvas");
 		var context = canvas.getContext('2d');
 		var id;
 		var error;
+		
 		var commandHistory = [
 			"> Type 'help' for more info",
 		];
@@ -43,10 +45,12 @@
 		
 		scaleCanvas();
 	
+		//Function called upon the creation of the window
 		function init() {		
 			if (error != undefined) {
 				throw error;
 			}
+			//Graphics should not be ran in init, as a result this program's init simply runs the tick function
 			tick();
 		}
 
@@ -96,7 +100,7 @@
 					commandHistory.push("   Commands:");
 					commandHistory.push("     help: shows this menu");
 					commandHistory.push("     cls:  clears the screen");
-					commandHistory.push("     run <program> [parameter]:  stars a program");
+					commandHistory.push("     run <program>/<url> [parameter]:  start a program");
 					commandHistory.push("     kill <program_id>/<program>/*:  kills program by");
 					commandHistory.push("       float id or all programs of type specified");
 					commandHistory.push("     programs:  lists all programs");
@@ -128,8 +132,8 @@
 		//Recive data from main
 		window.addEventListener('message', function(event) { 
 			if (event.data.type == "init") {
-				window.parent.postMessage({type:"init",data:id}, '*');
 				id = event.data.id;
+				window.parent.postMessage({type:"init",data:id}, '*');
 				init();
 			}
 			if (event.data.type == "tick") {
@@ -138,9 +142,12 @@
 			if (event.data.type == "image") {
 				window.parent.postMessage({type:"image",data:canvas.toDataURL('png'),id:id}, '*');
 			}
+			if (event.data.type == "scale") {
+				scaleCanvas();
+			}
 			if (event.data.type == "history") {
 				commandHistory.push(event.data.data);
-			}
+			}			
 		}); 
 			
 	} catch (e) {
