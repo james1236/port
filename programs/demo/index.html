@@ -1,5 +1,11 @@
+<!-- 
+
+	Example program
+
+-->
+
 <body>
-<!-- Example font used throughout the main and default programs -->
+<!-- Font used throughout the main and default programs -->
 <style>
 	@font-face {
 	  font-family: 'font';
@@ -15,24 +21,37 @@
 <script>
 
 	/*
-		Example program showing how to create your own
+		How to modify your existing web app to work best with this system:
 		
-		Keep in mind:
+			1) Create a new folder titled your app name. Create an index.html (the main html file) as well as a description.txt in there. The description.txt should contain a tiny text description of your app.
+			2) Add functions from this example (scaleCanvas, init, tick, message listner) and adapt them to work with your existing code
+			3) Finished! Add your program to the offline list in the terminal program and commit your program folder to /programs/
 		
-		* Your folder name is what the program is called, this base file must be called index.html and a description.txt should be in the base folder with a tiny description of the program's function. This will be shown in terminal, and in future, throughout the page.
-		* Avoid drawing any resources from external sites to canvas due to cross origin issues blocking the capture of a tainted canvas.
-		* None of this protocol is mandatory and any site should load as a window. Meeting this protocol does however provide significantly improved functionality and user experience. Here are some potential issues with programs that do not meet protocol:
-			- Inactive window image will not show up
-			- Program will run even when inactive, causing lag issues especially when multiple windows are open
-			- Scaling (especially when maximizing) will not work
-			- Any features current or planned that involve communication between the main page and the program will not work
-			- Mismatch in style and design aswell as features unexpectedly not working
-			- An exclamation mark will appear next to window management controls that when clicked will warn the user of these issues
+		
+		Additional Info:
+		
+			* None of this protocol is mandatory and most sites should load correctly as a "program". Meeting this protocol does however provide significantly improved functionality and user experience. Here are some potential issues with programs that do not meet protocol:
+		
+				- Inactive window image will not show up
+				- Program will run even when inactive causing lag issues especially when multiple windows are open
+				- Scaling (especially when maximizing and restoring) will not work
+				- Any features current or planned that involve communication between the main page and the program will not work
+				- Mismatch in style and design aswell as features unexpectedly not working
+				- An exclamation mark will appear next to window management controls that when clicked will warn the user of these issues
+				- Program unlisted or unable to run due to no specifically named index.html and no addition to offline list
+				
+			* Your folder name is the program's name, this base file must be called index.html and a description.txt should be in the base folder with a tiny description of the program's function. This will be shown in terminal, and in future, throughout the system.
+		
+			* Avoid drawing any resources from external sites to canvas due to cross origin issues blocking the capture of a tainted canvas.
 			
-		* You can commit your program folder to the programs folder in the github (https://github.com/james1236/port) although an intuitive way of browsing other's programs and adding them to your session is planned.
-		* Any program in the programs folder can be ran using the terminal however these programs will not show up unless the app is running on a server that supports php (not github)
-		* Add your program name and description to the terminal program's offline program list incase the service is used outside of a php server
-	
+			* Any routine that runs constantly should be run off the tick listner rather than setInterval for example.
+			
+			* You can commit your program folder to the programs folder in the github (https://github.com/james1236/port) although an intuitive way of browsing other's programs and adding them to user sessions is planned.
+		
+			* Any program in the programs folder can be ran using the terminal however these programs will be unlisted when using the "programs" command unless the program name is added to the terminal program's offline list or the session is being ran on a dynamic, php supporting web server (gh pages dosen't work)
+		
+			* Add your program name and description to the terminal program's offline program list in the majority case that the session is run outside of a php server
+			
 	*/
 	
 	//Standard Rescaling Function
@@ -77,7 +96,7 @@
 				throw error;
 			}
 			
-			//Demo code
+			//Example graphics
 			if (initialized) {
 				//Blue BG
 				context.fillStyle = "#66f";
@@ -119,9 +138,7 @@
 				alert("touch");
 			});
 			
-		//Reciving communication from main program listener.
-		//Although these example triggers are important for the end user experience they are not required.
-		
+		//Reciving communication from main program
 		window.addEventListener('message', function(event) { 
 			//Main requesting window to initialize, window gets given it's own id and replys back
 			if (event.data.type == "init") {

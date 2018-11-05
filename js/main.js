@@ -1,20 +1,9 @@
-/* Project Browser Based on Windows Like Desktop Design 
-inspired by http://daydun.com/'s terminal portfolio and other projects
-*/
-
-//save windows array between sessions (contains all programs local vars too)
-
-//cannot create windows quickly without loading issues
-//should have terminal program with special perms to manage other window content (same as un-unmaximizable desktop program behind everything)
-//perms work through special windowcontent messages that only work if the id's window has that flag set? or only if it has a certian program type
-//opening the site should yeild a boot screen and the whole thing should feel fluid and consistent between sessions
-//log in program that loads your session from the server and saves it to it too.
-
 /* 
-fileSystem var is saved online and encrypted with your password (hashed?) so the password is never saved or anything and your data is only ever accessible using it. add a slight constant salt to all passwords
-
-
+	Mock operating system in browser
+	
+	inspired by http://daydun.com/'s terminal portfolio and other projects
 */
+
 var canvas = document.getElementById('canvas');
 var context = canvas.getContext('2d');
 
@@ -118,7 +107,6 @@ function createWindow(x,y,sx,sy,maximized,minimized,program,initInfo) {
 }
 
 function drawWindows() {
-	//start by sorting windows by their z
 	for (i = windows.length-1; i > -1; i--) {
 		if (i != active) {
 			drawWindow(i);
@@ -135,9 +123,7 @@ function drawWindow(i,windowActive) {
 	if (windowActive) {
 		activeTexture = 16;
 	}
-	//context.fillStyle = "#999";
-	//context.fillRect(windows[i].x,windows[i].y,windows[i].sx*tileScale,windows[i].sy*tileScale);
-	
+
 	if (!windows[i].maximized) {
 		//tl
 		context.drawImage(spritesheet,textureMap["tl"][0],textureMap["tl"][1]+activeTexture,textureMap["tl"][2],textureMap["tl"][3],windows[i].x,windows[i].y-tileScale,tileScale,tileScale);
@@ -212,12 +198,6 @@ function drawWindow(i,windowActive) {
 		context.fillText("- \u25A1 x",canvas.width-tileScale/8,windows[i].y-tileScale/20);
 	}
 	
-	//imported icon
-	if (!windows[i].initiated && globalTimer - windows[i].creationTime > 10) {
-		context.globalAlpha = 0.8;
-		context.font = "20px font";
-		//context.fillText("!",windows[i].x+windows[i].sx*tileScale-40-tileScale/1.4,windows[i].y-9);
-	}
 	context.globalAlpha = 1;
 	
 	//Seeded Random colored rect for bg of windows based on their id
@@ -227,7 +207,7 @@ function drawWindow(i,windowActive) {
 		
 		
 	if (!windows[i].active) {
-		//draw screenshot for inactive windows
+		//Draw screenshot for inactive windows
 		try {
 			context.drawImage(windows[i].image,windows[i].x+(tileScale/8),windows[i].y,windows[i].iframe.width,windows[i].iframe.height);
 		} catch (e) {
@@ -601,10 +581,6 @@ window.addEventListener('message', function(event) {
 }); 
 
 //Mouse Input
-
-//idea (turn canvas into image, hide canvas while held and then draw it again when placed? damn it the window has to stay there...)
-//only allow one window active at a time, the rest are images? not bad, would prevent lag
-
 $(canvas)
 	.bind('touchstart mousedown',function(e){
 		e.preventDefault()
