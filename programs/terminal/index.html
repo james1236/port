@@ -30,6 +30,8 @@
 		var context = canvas.getContext('2d');
 		var id;
 		var error;
+		var offlineCountdown;
+		var countdown = false;
 		
 		var commandHistory = [
 			"> Type 'help' for more info",
@@ -57,6 +59,22 @@
 		function tick() {
 			if (error != undefined) {
 				throw error;
+			}
+			
+			if (countdown) {
+				offlineCountdown--;
+			}
+			
+			//Offline program list
+			if (offlineCountdown <= 0) {
+				offlineCountdown = 700;
+				countdown = false;
+				
+				commandHistory.push("   Timed Out (Incomplete offline program list):");
+				commandHistory.push("     demo: example test program");
+				commandHistory.push("     demoError: error test program");
+				commandHistory.push("     system: options and docs");
+				commandHistory.push("     terminal: run commands");
 			}
 			
 			//BG
@@ -103,28 +121,38 @@
 					commandHistory.push("     run <program>/<url> [parameter]:  start a program");
 					commandHistory.push("     kill <program_id>/<program>/*:  kills program by");
 					commandHistory.push("       float id or all programs of type specified");
-					commandHistory.push("     programs:  lists all programs");
+					commandHistory.push("     programs [timeout]:  lists all programs");
 					found = true;
 				}
 				if (msg.substring(0,3) == "run") {
+					if (msg.length == 3 || msg.length == 4) {
+						commandHistory.push("   Error: Parameter(s) required (type 'help')");
+						return;
+					}
 					window.parent.postMessage({type:"terminal",request:"run",data:msg.substring(4),id:id}, '*');
 					found = true;
 				}				
 				if (msg.substring(0,4) == "kill") {
+					if (msg.length == 4 || msg.length == 5) {
+						commandHistory.push("   Error: Parameter(s) required (type 'help')");
+						return;
+					}
 					window.parent.postMessage({type:"terminal",request:"kill",data:msg.substring(5),id:id}, '*');
 					found = true;
 				}				
-				if (msg == "programs") {
-					commandHistory.push("   Programs:");
-					commandHistory.push("     demo: just a test");
-					commandHistory.push("     demoError: an error test");
-					commandHistory.push("     terminal: terminal program");
-					commandHistory.push("     system: info and settings");
-					commandHistory.push("   Type 'run <program>' to run a program");
+				if (msg.substring(0,8) == "programs") {
+					commandHistory.push("   Requesting program list...");
+					window.parent.postMessage({type:"terminal",request:"programs",id:id}, '*');
+					if (msg.substring(8).length > 1) {
+						offlineCountdown = parseInt(msg.substring(9));
+					} else {
+						offlineCountdown = 700;
+					}
+					countdown = true;
 					found = true;
 				}
 				if (!found) {
-					commandHistory.push("   Error: Unkown command");
+					commandHistory.push("   Error: Unkown command (type 'help')");
 				}
 			}
 		});
@@ -148,6 +176,15 @@
 			if (event.data.type == "history") {
 				commandHistory.push(event.data.data);
 			}			
+			if (event.data.type == "programs") {
+				for (i = 0; i < event.data.data.length; i++) {
+					description = (event.data.data[i].description.length) ? event.data.data[i].description : "no description";
+					commandHistory.push("     "+event.data.data[i].program+": "+description);
+				}
+				commandHistory.push("   Type 'run <program>' to run a program");
+				offlineCountdown = 700;
+				countdown = false;
+			}
 		}); 
 			
 	} catch (e) {

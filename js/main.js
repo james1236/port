@@ -374,6 +374,10 @@ setInterval(function() {
 	context.clearRect(0,0,canvas.width,canvas.height);
 	context.imageSmoothingEnabled = false;
 
+	try {
+		context.drawImage(document.getElementById("background"),0,0,canvas.width,canvas.height);
+	} catch (e) {}
+	
 	mainLoop();
 //1000/fps
 },1000/60);
@@ -572,6 +576,22 @@ window.addEventListener('message', function(event) {
 					kills = getWindowIndiciesByProgram(event.data.data);
 					deletions = deletions.concat(kills)
 					windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   killed all programs of type '"+event.data.data+"'"}, '*');
+				}
+			}
+			if (event.data.request == "programs") {
+				var xhttp = new XMLHttpRequest();
+				xhttp.open("POST", "programs/index.php", true);
+				xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+				xhttp.send();
+
+				xhttp.onreadystatechange = function() {
+					if (this.readyState == 4) {
+						if (this.responseText[0] == "[") {
+							windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"programs",data:JSON.parse(this.responseText)}, '*');
+						} else {
+							windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"programs",data:[]}, '*');
+						}
+					}
 				}
 			}			
 		} else {
