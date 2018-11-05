@@ -1,4 +1,6 @@
 <?php
+//Used to get a list of programs while being hosted on a php supporting server
+
 $dirs = glob(getcwd() . '/*' , GLOB_ONLYDIR);;
 
 $output = "[";
