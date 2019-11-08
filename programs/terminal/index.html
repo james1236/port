@@ -134,11 +134,11 @@
 				if (msg == "help") {
 					commandHistory.push("   Commands:");
 					commandHistory.push("     help: shows this menu");
+					commandHistory.push("     programs:  lists all programs");
 					commandHistory.push("     cls:  clears the screen");
 					commandHistory.push("     run <program>/<url> [parameter]:  start a program");
 					commandHistory.push("     kill <program_id>/<program>/*:  kills program by");
 					commandHistory.push("       float id or all programs of type specified");
-					commandHistory.push("     programs [timeout]:  lists all programs");
 					found = true;
 				}
 				if (msg.substring(0,3) == "run") {
@@ -158,13 +158,14 @@
 					found = true;
 				}				
 				if (msg.substring(0,8) == "programs") {
-					commandHistory.push("   Requesting program list...");
+					//commandHistory.push("   Requesting program list...");
 					window.parent.postMessage({type:"terminal",request:"programs",id:id}, '*');
-					if (msg.substring(8).length > 1) {
-						offlineCountdown = parseInt(msg.substring(9));
-					} else {
-						offlineCountdown = 300;
-					}
+					//if (msg.substring(8).length > 1) {
+					//	offlineCountdown = parseInt(msg.substring(9));
+					//} else {
+					//	offlineCountdown = 300;
+					//}
+					offlineCountdown = -1;
 					countdown = true;
 					found = true;
 				}
