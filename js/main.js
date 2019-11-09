@@ -43,13 +43,14 @@ var deletions = [];
 
 var fileSystem = [];
 
+var exampleWindowId = -1;
+
 //Create some example windows
 setTimeout(function () {
+	exampleWindowId = createWindow(-1,-1,8,7,false,false,"demo");
 	setTimeout(function () {
-		createWindow(-1,-1,8,7,false,false,"demo");
+		minimizeWindow(exampleWindowId);
 	},200);
-	
-	minimizeWindow(createWindow(-1,-1,8,7,false,false,"system"));
 },1000);
 
 function getWindowIndiciesByProgram(program) {
