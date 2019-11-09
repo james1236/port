@@ -47,9 +47,12 @@ var exampleWindowId = -1;
 
 //Create some example windows
 setTimeout(function () {
-	exampleWindowId = createWindow(-1,-1,8,7,false,false,"demo");
+	createWindow(-1,-1,8,7,false,false,"demo");
 	setTimeout(function () {
-		minimizeWindow(exampleWindowId);
+		exampleWindowId = createWindow(-1,-1,8,7,false,true,"system");
+		setTimeout(function () {
+			minimizeWindow(exampleWindowId);
+		},200);
 	},200);
 },1000);
 
