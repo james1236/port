@@ -43,6 +43,12 @@ var deletions = [];
 
 var fileSystem = [];
 
+//Create some example windows
+setTimeout(function () {
+	createWindow(-1,-1,8,7,false,false,"demo");
+	createWindow(-1,-1,8,7,false,true,"system");
+},1000);
+
 function getWindowIndiciesByProgram(program) {
 	output = [];
 	for (i = windows.length-1; i > -1; i--) {
