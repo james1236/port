@@ -45,8 +45,11 @@ var fileSystem = [];
 
 //Create some example windows
 setTimeout(function () {
-	createWindow(-1,-1,8,7,false,false,"demo");
-	createWindow(-1,-1,8,7,false,true,"system");
+	setTimeout(function () {
+		createWindow(-1,-1,8,7,false,false,"demo");
+	},200);
+	
+	minimizeWindow(createWindow(-1,-1,8,7,false,false,"system"));
 },1000);
 
 function getWindowIndiciesByProgram(program) {
@@ -110,6 +113,8 @@ function createWindow(x,y,sx,sy,maximized,minimized,program,initInfo) {
 	document.body.appendChild(windows[windows.length-1].iframe);
 
 	windowPointerEvents(true);
+	
+	return windows[windows.length-1].id;
 }
 
 function drawWindows() {
