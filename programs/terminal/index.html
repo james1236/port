@@ -35,21 +35,10 @@
 		var context = canvas.getContext('2d');
 		var id;
 		var error;
-		var offlineCountdown;
-		var countdown = false;
 		
 		var commandHistory = [
 			"> Type 'help' for more info",
 		];
-		
-		//Offline program list (this list will show when the server list cannot be found, add your program and description here)
-		var offlineProgramList = [
-			{program:"demo",description:"example test program"},
-			{program:"demoError",description:"error test program"},
-			{program:"system",description:"options and docs"},
-			{program:"terminal",description:"run commands"},
-		];
-		//END OFFLINE PROGRAM LIST
 		
 		function scaleCanvas() {
 			canvas.width = window.innerWidth; 
@@ -73,25 +62,6 @@
 		function tick() {
 			if (error != undefined) {
 				throw error;
-			}
-			
-			if (countdown) {
-				offlineCountdown--;
-			}
-			
-			if (offlineCountdown <= 0 && countdown) {
-				offlineCountdown = 700;
-				countdown = false;
-				
-				commandHistory.push("   Timed Out. Offline Programs List:");
-				
-				for (i = 0; i < offlineProgramList.length; i++) {
-					description = (offlineProgramList[i].description && offlineProgramList[i].description.length) ? offlineProgramList[i].description : "no description";
-					commandHistory.push("     "+offlineProgramList[i].program+": "+description);
-				}
-				
-				
-				commandHistory.push("   Type 'run <program>' to run a program");
 			}
 			
 			//BG
@@ -158,15 +128,7 @@
 					found = true;
 				}				
 				if (msg.substring(0,8) == "programs") {
-					//commandHistory.push("   Requesting program list...");
 					window.parent.postMessage({type:"terminal",request:"programs",id:id}, '*');
-					//if (msg.substring(8).length > 1) {
-					//	offlineCountdown = parseInt(msg.substring(9));
-					//} else {
-					//	offlineCountdown = 300;
-					//}
-					offlineCountdown = -1;
-					countdown = true;
 					found = true;
 				}
 				if (!found) {
@@ -200,7 +162,6 @@
 					commandHistory.push("     "+event.data.data[i].program+": "+description);
 				}
 				commandHistory.push("   Type 'run <program>' to run a program");
-				countdown = false;
 			}
 		}); 
 			

@@ -574,19 +574,20 @@ window.addEventListener('message', function(event) {
 				}
 			}
 			if (event.data.request == "programs") {
-				var xhttp = new XMLHttpRequest();
-				xhttp.open("POST", "programs/index.php", true);
-				xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-				xhttp.send();
-
-				xhttp.onreadystatechange = function() {
-					if (this.readyState == 4) {
-						if (this.responseText[0] == "[") {
-							windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"programs",data:JSON.parse(this.responseText)}, '*');
-						} else {
-							windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"programs",data:[]}, '*');
-						}
+				var programListRaw = [];
+				var programList = [];
+				try {
+					programListRaw = loadFile("data/programList.txt").split(",");
+					for (program of programListRaw) {
+						programList.push({
+							"program":program,
+							"description":loadFile("programs/"+program+"/description.txt"),
+						});
 					}
+					
+					windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"programs",data:programList}, '*');
+				} catch (e) {
+					windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   Error: "+e}, '*'); 
 				}
 			}			
 		} else {
@@ -704,4 +705,15 @@ Math.seededRandom = function(max, min) {
 	var rnd = Math.seed / 233280;
  
 	return Math.trunc(min + rnd * (max - min));
+}
+
+function loadFile(filePath) {
+	var result = null;
+	var xmlhttp = new XMLHttpRequest();
+	xmlhttp.open("GET", filePath, false);
+	xmlhttp.send();
+	if (xmlhttp.status==200) {
+		result = xmlhttp.responseText;
+	}
+	return result;
 }
