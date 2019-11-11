@@ -157,6 +157,7 @@
 				commandHistory.push(event.data.data);
 			}			
 			if (event.data.type == "programs") {
+				commandHistory.push("   Programs:");
 				for (i = 0; i < event.data.data.length; i++) {
 					description = (event.data.data[i].description.length) ? event.data.data[i].description : "no description";
 					commandHistory.push("     "+event.data.data[i].program+": "+description);

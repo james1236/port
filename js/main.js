@@ -577,12 +577,15 @@ window.addEventListener('message', function(event) {
 				var programListRaw = [];
 				var programList = [];
 				try {
-					programListRaw = loadFile("data/programList.txt").split(",");
+					programListRaw = trim(loadFile("data/programList.txt")).split(",");
 					for (program of programListRaw) {
-						programList.push({
-							"program":program,
-							"description":loadFile("programs/"+program+"/description.txt"),
-						});
+						program = trim(program);
+						if (program.length > 1) {
+							programList.push({
+								"program":program,
+								"description":loadFile("programs/"+program+"/description.txt"),
+							});
+						}
 					}
 					
 					windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"programs",data:programList}, '*');
