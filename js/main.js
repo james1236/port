@@ -577,9 +577,9 @@ window.addEventListener('message', function(event) {
 				var programListRaw = [];
 				var programList = [];
 				try {
-					programListRaw = trim(loadFile("data/programList.txt")).split(",");
+					programListRaw = loadFile("data/programList.txt").trim().split(",");
 					for (program of programListRaw) {
-						program = trim(program);
+						program = program.trim();
 						if (program.length > 1) {
 							programList.push({
 								"program":program,
