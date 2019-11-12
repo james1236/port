@@ -29,6 +29,10 @@
 		var id;
 		var error;
 		var type;
+		var permProgram;
+		var permLevel;
+		var permCurrentLevel;
+		var permConfirmPostData;
 		
 		function scaleCanvas() {
 			canvas.width = window.innerWidth; 
@@ -102,6 +106,19 @@
 						"    unsafe content, may run in the background",
 						"    even when inactive and may run incorrectly.",
 					]
+				},				
+				{
+					page:"permissions",
+					lines:[
+						"    PERMISSIONS WARNING",
+						`    The program '${permProgram}' with current`,
+						`    permissions level of '${permCurrentLevel}' has`,
+						`    requested the permissions level '${permLevel}'`,
+						"    ",
+						"    Accept this permenant permission elevation?",
+						"    ",
+						"    |Yes|                       |No|",
+					]
 				},
 			];
 			
@@ -160,28 +177,73 @@
 
 		$(canvas)
 			.bind('touchstart mousedown',function(e){
-				//alert("touch");
+				if (e.touches == undefined) {
+					mouseX = e.clientX;
+					mouseY = e.clientY;
+				} else {
+					mouseX = parseInt(e.touches[0].pageX);
+					mouseY = parseInt(e.touches[0].pageY);
+				}
+				
+				if (type == "permissions") {
+					if (mouseCollide(28,238,40,22)) {
+						window.parent.postMessage({request:"updatePermissions",targetProgram:permProgram,targetLevel:permLevel,id:id}, '*');
+						window.parent.postMessage(permConfirmPostData, '*');
+						window.parent.postMessage({request:"kill",data:id,id:id}, '*');
+					}
+					if (mouseCollide(168,237,33,23)) {
+						window.parent.postMessage({request:"failPermissions",targetProgram:permProgram,id:id}, '*');
+						window.parent.postMessage({request:"kill",data:id,id:id}, '*');
+					}
+				}
 			});
 			
 			
 		//Recive data from main
 		window.addEventListener('message', function(event) { 
-			if (event.data.type == "init") {
+			if (event.data.request == "init") {
 				id = event.data.id;
-				window.parent.postMessage({type:"init",data:id}, '*');
-				type = event.data.initInfo;
+				window.parent.postMessage({request:"init",id:id}, '*');
+				
+				if (Object.prototype.toString.call(event.data.initInfo) === '[object Object]') {
+					type = event.data.initInfo.page;
+					
+					if (type == "permissions") {
+						permLevel = event.data.initInfo.level;
+						permCurrentLevel = event.data.initInfo.currentLevel;
+						permProgram = event.data.initInfo.program;
+						permConfirmPostData = event.data.initInfo.confirmPostData;
+					}
+				} else {
+					type = event.data.initInfo;
+				}
+				
 				init();
 			}
-			if (event.data.type == "tick") {
+			if (event.data.request == "tick") {
 				tick();
 			}
-			if (event.data.type == "image") {
-				window.parent.postMessage({type:"image",data:canvas.toDataURL('png'),id:id}, '*');
+			if (event.data.request == "image") {
+				window.parent.postMessage({request:"image",data:canvas.toDataURL('png'),id:id}, '*');
 			}
-			if (event.data.type == "scale") {
+			if (event.data.request == "scale") {
 				scaleCanvas();
 			}
 		}); 
+		
+		function mouseCollide(x,y,width,height) {
+			if (height == undefined) {
+				height = width;
+			}
+			
+			if (mouseX > x && 
+				mouseX < x+width && 
+				mouseY > y && 
+				mouseY < y+height) {
+				return true;
+			}
+			return false;
+		}
 			
 	} catch (e) {
 		console.log(e);

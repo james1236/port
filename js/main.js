@@ -41,7 +41,31 @@ var windows = [];
 
 var deletions = [];
 
-var fileSystem = [];
+var programPermissions = {
+	"terminal":{
+		level:"super",
+	},	
+	"system":{
+		level:"super",
+	},
+};
+
+var permissionRequirements = {
+	"init":"basic",
+	"image":"basic",
+	"programs":"basic",
+	
+	"updatePermissions":"super",
+	"failPermissions":"super",
+	"kill":"super",
+	"run":"super",
+}
+
+var permissionDictionary = {
+	"ultra":-1,
+	"super":0,
+	"basic":1,
+}
 
 var exampleWindowId = -1;
 
@@ -52,8 +76,8 @@ setTimeout(function () {
 		exampleWindowId = createWindow(-1,-1,8,7,false,true,"system");
 		setTimeout(function () {
 			minimizeWindow(exampleWindowId);
-		},200);
-	},200);
+		},400);
+	},400);
 },1000);
 
 function getWindowIndiciesByProgram(program) {
@@ -103,11 +127,20 @@ function createWindow(x,y,sx,sy,maximized,minimized,program,initInfo) {
 	});
 	
 	setActiveWindow(windows.length-1);
-	if (!(program.substring(0,4) == "http")) {
+	if (!(program.substring(0,4) == "http" || program.substring(0,5) == "data:")) {
 		windows[windows.length-1].iframe.src = "programs/"+program+"/index.html";
 	} else {
 		windows[windows.length-1].iframe.src = program;
 	}
+	
+	if (program.substring(0,5) == "data:") {
+		windows[windows.length-1].program = "custom";
+	}
+	
+	if (programPermissions[windows[windows.length-1].program] == undefined) {
+		programPermissions[windows[windows.length-1].program] = {level:"basic"};
+	}
+	
 	windows[windows.length-1].iframe.style = "top:"+(y)+"px;left:"+(x+(tileScale/8))+"px;position: fixed; opacity: 1;";
 	windows[windows.length-1].iframe.setAttribute("id",windows[windows.length-1].id+"");
 	windows[windows.length-1].iframe.frameBorder = "0";
@@ -176,15 +209,21 @@ function drawWindow(i,windowActive) {
 		}
 		
 		//title
-		context.globalAlpha = 0.4;
+		context.globalAlpha = 0.2;
 		context.textAlign = "left";
 		context.fillStyle = "#fff";
 		context.font = "24px font";
 		context.fillText(windows[i].program,windows[i].x+35,windows[i].y-7);
-		if (windows[i].sx > 5) {
-			context.fillText(windows[i].program+" "+windows[i].id,windows[i].x+35,windows[i].y-7);
-		} else {
-			context.fillText(windows[i].program+" "+(windows[i].id+"").substr(0,12)+"...",windows[i].x+35,windows[i].y-7);
+		
+		permString = "  "+programPermissions[windows[i].program].level;
+		
+		for (rep = 0; rep < 2; rep++) {
+			if (windows[i].sx > 5) {
+				context.fillText(windows[i].program+" "+windows[i].id+permString,windows[i].x+35,windows[i].y-7);
+			} else {
+				context.fillText(windows[i].program+" "+(windows[i].id+permString).substr(0,12)+"...",windows[i].x+35,windows[i].y-7);
+			}
+			permString = "";
 		}
 	} else {
 		context.globalAlpha = 0.4;
@@ -337,7 +376,7 @@ function maximizeWindow(id) {
 	windows[getWindowIndexByID(id)].x = 0-tileScale/8;
 	setActiveWindow(getWindowIndexByID(id));
 	
-	windows[getWindowIndexByID(id)].iframe.contentWindow.postMessage({type:"scale"}, '*'); 
+	windows[getWindowIndexByID(id)].iframe.contentWindow.postMessage({request:"scale"}, '*'); 
 	
 }
 
@@ -358,7 +397,7 @@ function restoreWindow(id) {
 			windows[getWindowIndexByID(id)].x = randInt(Math.round(canvas.width-windows[getWindowIndexByID(id)].sx*tileScale-25))+25;
 			windows[getWindowIndexByID(id)].y = randInt(Math.round(canvas.height-windows[getWindowIndexByID(id)].sy*tileScale-25))+25;
 			
-			windows[getWindowIndexByID(id)].iframe.contentWindow.postMessage({type:"scale"}, '*'); 
+			windows[getWindowIndexByID(id)].iframe.contentWindow.postMessage({request:"scale"}, '*'); 
 			setActiveWindow(getWindowIndexByID(id));
 		}
 	}
@@ -389,14 +428,14 @@ function tickWindows() {
 		}
 		if (!windows[wi].initiated) {
 			try {
-				windows[wi].iframe.contentWindow.postMessage({type:"init",id:windows[wi].id,initInfo:windows[wi].initInfo}, '*'); 
+				windows[wi].iframe.contentWindow.postMessage({request:"init",id:windows[wi].id,initInfo:windows[wi].initInfo}, '*'); 
 			} catch (e) {
 				console.log(e);
 			}
 		} else {
 			if (windows[wi].active) {
 				try {
-					windows[wi].iframe.contentWindow.postMessage({type:"tick"}, '*'); 
+					windows[wi].iframe.contentWindow.postMessage({request:"tick"}, '*'); 
 				} catch (e) {
 					console.log(e);
 				}
@@ -519,7 +558,7 @@ function setActiveWindow(index) {
 				windows[i].stateChangeTime = globalTimer;
 				
 				//Request Image
-				windows[i].iframe.contentWindow.postMessage({type:"image"}, '*'); 
+				windows[i].iframe.contentWindow.postMessage({request:"image"}, '*'); 
 			}
 		} else {
 			windows[i].iframe.style.pointerEvents = "auto";
@@ -539,64 +578,132 @@ function windowPointerEvents(mode) {
 	}
 }
 
+function requestPermissions(program,level,confirmPostData,currentLevel) {
+	createWindow(-1,-1,7,5,false,false,"system",{page:"permissions",program:program,level:level,confirmPostData:confirmPostData,currentLevel:currentLevel});
+}
+
 //Recive data from windows
 window.addEventListener('message', function(event) { 
-	if (event.data.type == "image") {
+	//Program ID validity check
+	if (event.data.id && windows[getWindowIndexByID(event.data.id)] && windows[getWindowIndexByID(event.data.id)].program) {
+		var programName = windows[getWindowIndexByID(event.data.id)].program;
+	} else {
+		return false; //No ID provided for authentication
+	}	
+	
+	//Permissions eligibility check
+	if (event.data.request) {
+		if (permissionRequirements[event.data.request]) {
+			if (programPermissions[programName] == undefined) {
+				programPermissions[programName] = {
+					level:"basic"
+				};
+			}
+			if (permissionDictionary[permissionRequirements[event.data.request]] < permissionDictionary[programPermissions[programName].level]) {
+						
+				windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({request:"error",data:"   '"+programPermissions[programName].level+"' perm is insufficient ('"+permissionRequirements[event.data.request]+"' needed for '"+event.data.request+"')"}, '*');
+				
+				if (programPermissions[programName].count == undefined || programPermissions[programName].count < 2) {
+					requestPermissions(programName,permissionRequirements[event.data.request],event.data,programPermissions[programName].level);
+				} else {
+					windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({request:"error",data:"   '"+programPermissions[programName].level+"' max session failed perm requests reached"}, '*');
+				}
+				
+				return false; //Elevated permissions required
+			}
+		} else {
+			windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({request:"error",data:"   Error: perms not set for '"+event.data.request+"'"}, '*');
+			return false; //Permissions not set up for attempted request
+		}
+	} else {
+		return false; //No valid request made
+	}
+	
+	//-------------------
+	//By here all permissions and checks are met for the given request
+	//-------------------
+	
+	if (event.data.request == "init") {
+		windows[getWindowIndexByID(event.data.id)].initiated = true;
+		return;
+	}
+	
+	if (event.data.request == "image") {
 		windowIndex = getWindowIndexByID(event.data.id);
 		
 		windows[windowIndex].image = new Image();
 		windows[windowIndex].image.src = event.data.data;
+		return;
 	}
-	if (event.data.type == "init") {
-		windows[getWindowIndexByID(event.data.data)].initiated = true;
-	}
-	if (event.data.type == "terminal") {
-		if (getWindowIndexByID(event.data.id) == undefined || windows[getWindowIndexByID(event.data.id)].program == "terminal") {
-			if (event.data.request == "run") {
-				if (event.data.data.split(" ").length == 1) {
-					createWindow(-1,-1,8,7,false,false,event.data.data);
-					windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   ran program '"+event.data.data+"'"}, '*');
-				} else {
-					createWindow(-1,-1,8,7,false,false,event.data.data.split(" ")[0],event.data.data.split(" ")[1]);
-					windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   ran program '"+event.data.data.split(" ")[0]+"' with parameter '"+event.data.data.split(" ")[1]+"'"}, '*');
-				}
-			}
-			if (event.data.request == "kill") {
-				//Single window selected by ID or *
-				if (!isNaN(event.data.data+"") && (event.data.data+"").toString().indexOf('.') != -1) {
-					deletions.push(event.data.data);
-					windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   killed program of id '"+event.data.data+"'"}, '*');
-				} else {
-					//Multiple windows selected by program type
-					kills = getWindowIndiciesByProgram(event.data.data);
-					deletions = deletions.concat(kills)
-					windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   killed all programs of type '"+event.data.data+"'"}, '*');
-				}
-			}
-			if (event.data.request == "programs") {
-				var programListRaw = [];
-				var programList = [];
-				try {
-					programListRaw = loadFile("data/programList.txt").trim().split(",");
-					for (program of programListRaw) {
-						program = program.trim();
-						if (program.length > 1) {
-							programList.push({
-								"program":program,
-								"description":loadFile("programs/"+program+"/description.txt"),
-							});
-						}
-					}
-					
-					windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"programs",data:programList}, '*');
-				} catch (e) {
-					windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   Error: "+e}, '*'); 
-				}
-			}			
+	
+	if (event.data.request == "run") {
+		//Accept
+		if (event.data.data.split(" ").length == 1) {
+			createWindow(-1,-1,8,7,false,false,event.data.data);
+			windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({request:"error",data:"   ran program '"+event.data.data+"'"}, '*');
 		} else {
-			windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({type:"history",data:"   Error: '"+windows[getWindowIndexByID(event.data.id)].program+"' cannot perform this action"}, '*'); 
+			createWindow(-1,-1,8,7,false,false,event.data.data.split(" ")[0],event.data.data.split(" ")[1]);
+			windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({request:"error",data:"   ran program '"+event.data.data.split(" ")[0]+"' with parameter '"+event.data.data.split(" ")[1]+"'"}, '*');
 		}
+		return;
 	}
+	
+	if (event.data.request == "updatePermissions") {
+		if (programPermissions[event.data.targetProgram] == undefined) {
+			programPermissions[event.data.targetProgram] = {level:event.data.targetLevel};
+		} else {
+			programPermissions[event.data.targetProgram].level = event.data.targetLevel;
+		}
+		return;
+	}	
+	
+	if (event.data.request == "failPermissions") {
+		if (programPermissions[event.data.targetProgram].count == undefined) {
+			programPermissions[event.data.targetProgram].count = 1;
+		} else {
+			programPermissions[event.data.targetProgram].count++;
+		}
+		return;
+	}
+	
+	if (event.data.request == "kill") {
+		//Single window selected by ID or *
+		if (!isNaN(event.data.data+"") && (event.data.data+"").toString().indexOf('.') != -1) {
+			deletions.push(event.data.data);
+			windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({request:"error",data:"   killed program of id '"+event.data.data+"'"}, '*');
+		} else {
+			//Multiple windows selected by program type
+			kills = getWindowIndiciesByProgram(event.data.data);
+			deletions = deletions.concat(kills)
+			windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({request:"error",data:"   killed all programs of type '"+event.data.data+"'"}, '*');
+		}
+		return;
+	}
+	
+	if (event.data.request == "programs") {
+		var programListRaw = [];
+		var programList = [];
+		try {
+			programListRaw = loadFile("data/programList.txt").trim().split(",");
+			for (program of programListRaw) {
+				program = program.trim();
+				if (program.length > 1) {
+					programList.push({
+						"program":program,
+						"description":loadFile("programs/"+program+"/description.txt"),
+					});
+				}
+			}
+			
+			windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({request:"programs",data:programList}, '*');
+		} catch (e) {
+			windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({request:"error",data:"   Error: "+e}, '*'); 
+		}
+		return;
+	}		
+	
+	//Fail
+	windows[getWindowIndexByID(event.data.id)].iframe.contentWindow.postMessage({request:"error",data:"   Error: '"+event.data.request+"' request incompletable"}, '*');
 }); 
 
 //Mouse Input

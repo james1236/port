@@ -1,0 +1,292 @@
+<body>
+<style>
+	@font-face {
+	  font-family: 'font';
+	  src: url('font.woff') format('woff'),
+	   url('font.ttf') format('truetype');
+	}  		
+	html * {
+		font-family: font;
+	}
+	
+	/* --- Scroll bars --- */
+	::-webkit-scrollbar {
+		width: 10px;
+	}
+	::-webkit-scrollbar-track {
+		background: #666; 
+	}
+	::-webkit-scrollbar-thumb {
+		background-color: #f1f1f1;
+	  outline: 1px solid slategrey;
+	}
+	::-webkit-scrollbar-thumb:hover {
+		background: #b1b1b1; 
+	}
+</style>
+<canvas id="canvas" style="top:0px;left:0px;position: fixed;"></canvas>
+<textarea class="tabSupport" id="textInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="position: fixed;top: 25px;left: 0px;height: calc(100% - 25px); width: 100%; background: rgba(2,2,2,1);text-align: center; font-size: 19px; text-align: left; padding:5px; color: #fff; outline: none; tab-size: 4; resize: none;"></textarea>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script>
+
+	//Standard Rescaling Function
+	function scaleCanvas() {
+		canvas.width = window.innerWidth; 
+		canvas.height = window.innerHeight;
+
+		canvas.style.width = Math.round(canvas.width)+"px";
+		canvas.style.height = Math.round(canvas.height)+"px";
+	}
+	
+	try {
+		//Standard Variables
+		var canvas = document.getElementById("canvas");
+		var context = canvas.getContext('2d');
+		var id;
+		var error;
+		var hover = {
+			run:false,
+		};
+		
+		function scaleCanvas() {
+			canvas.width = window.innerWidth; 
+			canvas.height = window.innerHeight;
+
+			canvas.style.width = Math.round(canvas.width)+"px";
+			canvas.style.height = Math.round(canvas.height)+"px";
+		}
+		
+		scaleCanvas();
+	
+		//Function called upon the creation of the window
+		function init() {		
+			if (error != undefined) {
+				throw error;
+			}
+			
+			//Example code loaded for the develop program
+			
+			document.getElementById("textInput").value = "<!-- \r\n\r\n\tExample program\r\n\r\n-->\r\n\r\n<body>\r\n<!-- Font used throughout the main and default programs -->\r\n<style>\r\n\t@font-face {\r\n\t  font-family: \'font\';\r\n\t  src: url(\'font.woff\') format(\'woff\'),\r\n\t   url(\'font.ttf\') format(\'truetype\');\r\n\t}  \t\t\r\n\thtml * {\r\n\t\tfont-family: font;\r\n\t}\r\n<\/style>\r\n<canvas id=\"canvas\" style=\"top:0px;left:0px;position: fixed;\"><\/canvas>\r\n<script src=\"https:\/\/ajax.googleapis.com\/ajax\/libs\/jquery\/3.2.1\/jquery.min.js\"><\/script>\r\n<script>\r\n\r\n\t\/*\r\n\t\tHow to modify your existing web app to work best with this system:\r\n\t\t\r\n\t\t\t1) Create a new folder titled your app name. Create an index.html (the main html file) as well as a description.txt in there. The description.txt should contain a tiny text description of your app (~5 words).\r\n\t\t\t2) Add functions from this example (scaleCanvas, init, tick, message listener) and adapt them to work with your existing code\r\n\t\t\t3) Finished! Add your program to the \"\/data\/programList.txt\" and commit your program folder to \/programs\/\r\n\t\t\r\n\t\t\r\n\t\tAdditional Info:\r\n\t\t\r\n\t\t\t* None of this protocol is mandatory and most sites should load correctly as a \"program\". Meeting this protocol does however provide significantly improved functionality and user experience. Here are some potential issues with programs that do not meet protocol:\r\n\t\t\r\n\t\t\t\t- Inactive window image will not show up\r\n\t\t\t\t- Program will run even when inactive causing lag issues especially when multiple windows are open\r\n\t\t\t\t- Scaling (especially when maximizing and restoring) will not work\r\n\t\t\t\t- Any features current or planned that involve communication between the main page and the program will not work\r\n\t\t\t\t- Mismatch in style and design aswell as features unexpectedly not working\r\n\t\t\t\t- An exclamation mark will appear next to window management controls that when clicked will warn the user of these issues\r\n\t\t\t\t- Program unlisted or unable to run due to no specifically named index.html and no addition to offline list\r\n\t\t\t\t\r\n\t\t\t* Your folder name is the program\'s name, this base file must be called index.html and a description.txt should be in the base folder with a tiny description of the program\'s function. This will be shown in terminal, and in future, throughout the system.\r\n\t\t\r\n\t\t\t* Avoid drawing any resources from external sites to canvas due to cross origin issues blocking the capture of a tainted canvas.\r\n\t\t\t\r\n\t\t\t* Any routine that runs constantly should be run off the tick listener rather than setInterval for example.\r\n\t\t\t\r\n\t\t\t* You can commit your program folder to the programs folder in the github (https:\/\/github.com\/james1236\/port) although an intuitive way of browsing other\'s programs and adding them to user sessions is planned.\r\n\t\t\r\n\t\t\t* Make sure to add your program to the \/data\/programList.txt or it will not show up in the terminal\r\n\t\t\t\r\n\t*\/\r\n\t\r\n\t\/\/Standard Rescaling Function\r\n\tfunction scaleCanvas() {\r\n\t\tcanvas.width = window.innerWidth; \r\n\t\tcanvas.height = window.innerHeight;\r\n\r\n\t\tcanvas.style.width = Math.round(canvas.width)+\"px\";\r\n\t\tcanvas.style.height = Math.round(canvas.height)+\"px\";\r\n\t}\r\n\t\r\n\ttry {\r\n\t\t\/\/Standard Variables\r\n\t\tvar canvas = document.getElementById(\"canvas\");\r\n\t\tvar context = canvas.getContext(\'2d\');\r\n\t\tvar id;\r\n\t\tvar error;\r\n\t\t\r\n\t\tscaleCanvas();\r\n\t\t\r\n\t\t\/\/Demo vars\r\n\t\tvar tickCounter;\r\n\t\tvar initialized = false;\r\n\t\r\n\t\t\/\/Highly reccomended function (called upon window creation)\r\n\t\tfunction init() {\t\t\r\n\t\t\tif (error != undefined) {\r\n\t\t\t\tthrow error;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\t\/\/Demo code\r\n\t\t\tinitialized = true;\r\n\t\t\ttickCounter = 0;\r\n\t\t\t\r\n\t\t\t\/\/Running 1 tick after init to show graphics\r\n\t\t\ttick();\r\n\t\t}\r\n\r\n\t\t\/\/Function called every tick while the window is active (avoid setInterval to allow the main program to manage resources)\r\n\t\tfunction tick() {\r\n\t\t\tif (error != undefined) {\r\n\t\t\t\tthrow error;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\t\/\/Example graphics\r\n\t\t\tif (initialized) {\r\n\t\t\t\t\/\/Blue BG\r\n\t\t\t\tcontext.fillStyle = \"#66f\";\r\n\t\t\t\tcontext.fillRect(0,0,canvas.width,canvas.height);\r\n\t\t\t\t\r\n\t\t\t\t\/\/Init \r\n\t\t\t\tcontext.globalAlpha = 0.5;\r\n\t\t\t\tcontext.fillStyle = \"#000\";\r\n\t\t\t\tcontext.fillRect(0,0,canvas.width,100);\r\n\t\t\t\tcontext.globalAlpha = 1;\r\n\t\t\t\t\r\n\t\t\t\t\/\/Text\r\n\t\t\t\tcontext.fillStyle = \"#fff\";\r\n\t\t\t\tcontext.font = \"24px font\";\r\n\t\t\t\tcontext.textAlign = \"center\";\r\n\t\t\t\tcontext.fillText(\"Program Initialized! \",canvas.width\/2,50);\r\n\t\t\t\tcontext.fillStyle = \"#000\";\r\n\t\t\t}\r\n\t\t\r\n\t\t\t\/\/Tick Banner\r\n\t\t\tcontext.fillRect(0,canvas.height-100,canvas.width,100);\r\n\t\t\t\r\n\t\t\t\/\/Text\r\n\t\t\tcontext.fillStyle = \"#fff\";\r\n\t\t\tcontext.font = \"24px font\";\r\n\t\t\tcontext.textAlign = \"center\";\r\n\t\t\tcontext.fillText(\"Program Ticked! \"+tickCounter,canvas.width\/2,canvas.height-50);\r\n\t\t\tcontext.font = \"12px font\";\r\n\t\t\tcontext.fillText(id,canvas.width\/2,canvas.height-25);\r\n\t\t\tcontext.fillStyle = \"#000\";\r\n\t\t\t\r\n\t\t\t\/\/Tick Counter\r\n\t\t\ttickCounter++;\r\n\t\t}\r\n\r\n\t\t\/\/Click detection example\r\n\t\t$(canvas)\r\n\t\t\t.bind(\'touchstart mousedown\',function(e){\r\n\t\t\t\talert(\"touch\");\r\n\t\t\t});\r\n\t\t\t\r\n\t\t\/\/Reciving communication from main program\r\n\t\twindow.addEventListener(\'message\', function(event) { \r\n\t\t\t\/\/Main requesting window to initialize, window is given it\'s own id and replies back to confirm\r\n\t\t\tif (event.data.request == \"init\") {\r\n\t\t\t\tid = event.data.id;\r\n\t\t\t\t\/\/Reply\r\n\t\t\t\twindow.parent.postMessage({request:\"init\",id:id}, \'*\');\r\n\t\t\t\tinit();\r\n\t\t\t}\r\n\t\t\t\/\/Main requesting window to tick\r\n\t\t\tif (event.data.request == \"tick\") {\r\n\t\t\t\ttick();\r\n\t\t\t}\r\n\t\t\t\/\/Main requesting window to give it\'s inactive image\r\n\t\t\tif (event.data.request == \"image\") {\r\n\t\t\t\t\/\/Reply\r\n\t\t\t\twindow.parent.postMessage({request:\"image\",data:canvas.toDataURL(\'png\'),id:id}, \'*\');\r\n\t\t\t}\r\n\t\t\t\/\/Main requesting window to rescale\r\n\t\t\tif (event.data.request == \"scale\") {\r\n\t\t\t\tscaleCanvas();\r\n\t\t\t}\r\n\t\t}); \r\n\t\t\t\r\n\t} catch (e) {\r\n\t\tconsole.log(e);\r\n\t\t\/\/Default error screen\r\n\t\tvar canvas = document.getElementById(\"canvas\");\r\n\t\tvar context = canvas.getContext(\'2d\');\r\n\t\tscaleCanvas();\r\n\t\tcontext.textAlign = \"center\";\r\n\t\tcontext.fillStyle = \"red\"\r\n\t\tcontext.fillRect(0,0,canvas.width,canvas.height);\r\n\t\tcontext.fillStyle = \"white\";\r\n\t\tcontext.font = \"32px font\";\r\n\t\tcontext.fillText(\"ERROR\",canvas.width\/2,canvas.height\/2.5);\r\n\t\tcontext.font = \"12px arial\";\r\n\t\tcontext.fillText(e,canvas.width\/2,canvas.height\/1.5);\r\n\t\terror = e;\r\n\t}\r\n<\/script>\r\n<\/body>"
+			
+			tick();
+		}
+
+		function tick() {
+			if (error != undefined) {
+				throw error;
+			}
+			
+			//BG
+			context.fillStyle = "#111";
+			context.fillRect(0,0,canvas.width,canvas.height);
+			
+			//Text
+			if (hover["run"]) {
+				context.fillStyle = "#555";
+				context.strokeStyle = "#333";
+			} else {
+				context.fillStyle = "#888";
+				context.strokeStyle = "#666";
+			}
+			context.lineWidth = 2;
+			context.fillRect(5,2,52,21);
+			context.strokeRect(5,2,52,21);
+			context.fillStyle = "#fff";
+			context.font = "20px font";
+			context.fillText("Run \u25b6",10,18);
+			
+			document.getElementById("textInput").focus();
+		}
+
+		$(canvas)
+			.bind('touchstart mousedown',function(e){
+				if (e.touches == undefined) {
+					mouseX = e.clientX;
+					mouseY = e.clientY;
+				} else {
+					mouseX = parseInt(e.touches[0].pageX);
+					mouseY = parseInt(e.touches[0].pageY);
+				}
+				
+				if (mouseCollide(5,2,52,21)) {
+					window.parent.postMessage({request:"run",data:"data:text/html;charset=utf-8," + encodeURI(document.getElementById("textInput").value),id:id}, '*');
+					hover["run"] = false;
+				}
+			})
+			.bind('touchstart mousemove',function(e){
+				if (e.touches == undefined) {
+					mouseX = e.clientX;
+					mouseY = e.clientY;
+				} else {
+					mouseX = parseInt(e.touches[0].pageX);
+					mouseY = parseInt(e.touches[0].pageY);
+				}
+
+				if (mouseCollide(5,2,52,21)) {
+					hover["run"] = true;
+				} else {
+					hover["run"] = false;
+				}
+			});
+			
+			
+		//Recive data from main
+		window.addEventListener('message', function(event) { 
+			if (event.data.request == "init") {
+				id = event.data.id;
+				window.parent.postMessage({request:"init",id:id}, '*');
+				init();
+			}
+			if (event.data.request == "tick") {
+				tick();
+			}
+			if (event.data.request == "image") {
+				window.parent.postMessage({request:"image",data:canvas.toDataURL('png'),id:id}, '*');
+			}
+			if (event.data.request == "scale") {
+				scaleCanvas();
+			}
+		}); 
+		
+		function mouseCollide(x,y,width,height) {
+			if (height == undefined) {
+				height = width;
+			}
+			
+			if (mouseX > x && 
+				mouseX < x+width && 
+				mouseY > y && 
+				mouseY < y+height) {
+				return true;
+			}
+			return false;
+		}
+		
+		//From https://stackoverflow.com/a/45396754/5493555
+		$(function() { 
+			var enabled = true;
+			$("textarea.tabSupport").keydown(function(e) {
+
+				// Escape key toggles tab on/off
+				if (e.keyCode==27)
+				{
+					enabled = !enabled;
+					return false;
+				}
+
+				// Enter Key?
+				if (e.keyCode === 13 && enabled)
+				{
+					// selection?
+					if (this.selectionStart == this.selectionEnd)
+					{
+						// find start of the current line
+						var sel = this.selectionStart;
+						var text = $(this).val();
+						while (sel > 0 && text[sel-1] != '\n')
+						sel--;
+
+						var lineStart = sel;
+						while (text[sel] == ' ' || text[sel]=='\t')
+						sel++;
+
+						if (sel > lineStart)
+						{
+							// Insert carriage return and indented text
+							document.execCommand('insertText', false, "\n" + text.substr(lineStart, sel-lineStart));
+
+							// Scroll caret visible
+							this.blur();
+							this.focus();
+							return false;
+						}
+					}
+				}
+
+				// Tab key?
+				if(e.keyCode === 9 && enabled) 
+				{
+					// selection?
+					if (this.selectionStart == this.selectionEnd)
+					{
+						// These single character operations are undoable
+						if (!e.shiftKey)
+						{
+							document.execCommand('insertText', false, "\t");
+						}
+						else
+						{
+							var text = this.value;
+							if (this.selectionStart > 0 && text[this.selectionStart-1]=='\t')
+							{
+								document.execCommand('delete');
+							}
+						}
+					}
+					else
+					{
+						// Block indent/unindent trashes undo stack.
+						// Select whole lines
+						var selStart = this.selectionStart;
+						var selEnd = this.selectionEnd;
+						var text = $(this).val();
+						while (selStart > 0 && text[selStart-1] != '\n')
+							selStart--;
+						while (selEnd > 0 && text[selEnd-1]!='\n' && selEnd < text.length)
+							selEnd++;
+
+						// Get selected text
+						var lines = text.substr(selStart, selEnd - selStart).split('\n');
+
+						// Insert tabs
+						for (var i=0; i<lines.length; i++)
+						{
+							// Don't indent last line if cursor at start of line
+							if (i==lines.length-1 && lines[i].length==0)
+								continue;
+
+							// Tab or Shift+Tab?
+							if (e.shiftKey)
+							{
+								if (lines[i].startsWith('\t'))
+									lines[i] = lines[i].substr(1);
+								else if (lines[i].startsWith("    "))
+									lines[i] = lines[i].substr(4);
+							}
+							else
+								lines[i] = "\t" + lines[i];
+						}
+						lines = lines.join('\n');
+
+						// Update the text area
+						this.value = text.substr(0, selStart) + lines + text.substr(selEnd);
+						this.selectionStart = selStart;
+						this.selectionEnd = selStart + lines.length; 
+					}
+
+					return false;
+				}
+
+				enabled = true;
+				return true;
+			});
+		});
+			
+	} catch (e) {
+		console.log(e);
+		//Error screen
+		var canvas = document.getElementById("canvas");
+		var context = canvas.getContext('2d');
+		scaleCanvas();
+		context.textAlign = "center";
+		context.fillStyle = "red"
+		context.fillRect(0,0,canvas.width,canvas.height);
+		context.fillStyle = "white";
+		context.font = "32px font";
+		context.fillText("ERROR",canvas.width/2,canvas.height/2.5);
+		context.font = "12px arial";
+		context.fillText(e,canvas.width/2,canvas.height/1.5);
+		error = e;
+	}
+</script>
+</body>

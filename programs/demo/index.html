@@ -23,9 +23,9 @@
 	/*
 		How to modify your existing web app to work best with this system:
 		
-			1) Create a new folder titled your app name. Create an index.html (the main html file) as well as a description.txt in there. The description.txt should contain a tiny text description of your app.
-			2) Add functions from this example (scaleCanvas, init, tick, message listner) and adapt them to work with your existing code
-			3) Finished! Add your program to the offline list in the terminal program and commit your program folder to /programs/
+			1) Create a new folder titled your app name. Create an index.html (the main html file) as well as a description.txt in there. The description.txt should contain a tiny text description of your app (~5 words).
+			2) Add functions from this example (scaleCanvas, init, tick, message listener) and adapt them to work with your existing code
+			3) Finished! Add your program to the "/data/programList.txt" and commit your program folder to /programs/
 		
 		
 		Additional Info:
@@ -44,13 +44,11 @@
 		
 			* Avoid drawing any resources from external sites to canvas due to cross origin issues blocking the capture of a tainted canvas.
 			
-			* Any routine that runs constantly should be run off the tick listner rather than setInterval for example.
+			* Any routine that runs constantly should be run off the tick listener rather than setInterval for example.
 			
 			* You can commit your program folder to the programs folder in the github (https://github.com/james1236/port) although an intuitive way of browsing other's programs and adding them to user sessions is planned.
 		
-			* Any program in the programs folder can be ran using the terminal however these programs will be unlisted when using the "programs" command unless the program name is added to the terminal program's offline list or the session is being ran on a dynamic, php supporting web server (gh pages dosen't work)
-		
-			* Add your program name and description to the terminal program's offline program list in the majority case that the session is run outside of a php server
+			* Make sure to add your program to the /data/programList.txt or it will not show up in the terminal
 			
 	*/
 	
@@ -140,24 +138,24 @@
 			
 		//Reciving communication from main program
 		window.addEventListener('message', function(event) { 
-			//Main requesting window to initialize, window gets given it's own id and replys back
-			if (event.data.type == "init") {
+			//Main requesting window to initialize, window is given it's own id and replies back to confirm
+			if (event.data.request == "init") {
 				id = event.data.id;
 				//Reply
-				window.parent.postMessage({type:"init",data:id}, '*');
+				window.parent.postMessage({request:"init",id:id}, '*');
 				init();
 			}
 			//Main requesting window to tick
-			if (event.data.type == "tick") {
+			if (event.data.request == "tick") {
 				tick();
 			}
 			//Main requesting window to give it's inactive image
-			if (event.data.type == "image") {
+			if (event.data.request == "image") {
 				//Reply
-				window.parent.postMessage({type:"image",data:canvas.toDataURL('png'),id:id}, '*');
+				window.parent.postMessage({request:"image",data:canvas.toDataURL('png'),id:id}, '*');
 			}
 			//Main requesting window to rescale
-			if (event.data.type == "scale") {
+			if (event.data.request == "scale") {
 				scaleCanvas();
 			}
 		}); 

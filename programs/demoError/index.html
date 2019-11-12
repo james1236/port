@@ -21,18 +21,18 @@
 		canvas.style.height = Math.round(canvas.height)+"px";
 	}
 	
-	//Recive data from main
+	//Recieve data from main
 	window.addEventListener('message', function(event) { 
-		if (event.data.type == "init") {
-			window.parent.postMessage({type:"init",data:id}, '*');
+		if (event.data.request == "init") {
+			window.parent.postMessage({request:"init",id:id}, '*');
 			id = event.data.id;
 			init();
 		}
-		if (event.data.type == "tick") {
+		if (event.data.request == "tick") {
 			tick();
 		}
-		if (event.data.type == "image") {
-			window.parent.postMessage({type:"image",data:canvas.toDataURL('png'),id:id}, '*');
+		if (event.data.request == "image") {
+			window.parent.postMessage({request:"image",data:canvas.toDataURL('png'),id:id}, '*');
 		}
 	}); 
 	
