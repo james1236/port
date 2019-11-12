@@ -70,7 +70,7 @@ var permissionDictionary = {
 var exampleWindowId = -1;
 
 //Create some example windows
-setTimeout(function () {
+/*setTimeout(function () {
 	createWindow(-1,-1,8,7,false,false,"demo");
 	setTimeout(function () {
 		exampleWindowId = createWindow(-1,-1,8,7,false,true,"system");
@@ -78,7 +78,7 @@ setTimeout(function () {
 			minimizeWindow(exampleWindowId);
 		},400);
 	},400);
-},1000);
+},1000);*/
 
 function getWindowIndiciesByProgram(program) {
 	output = [];
